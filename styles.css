@@ -1,0 +1,6 @@
+.display {
+    display: block;
+    width: 640px;
+    height: 480px;
+    margin: 50px auto;
+}
