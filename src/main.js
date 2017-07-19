@@ -2,10 +2,26 @@ window.onload = function() {
     let app = new Vue({
         el: '#vue',
         data: {
-            message: "",
+            // Typology select options
+            typologies: [
+               { text: "Opposing", value: "opposing" }, 
+               { text: "Semicircle", value: "semicircle" }, 
+               { text: "Horseshoe", value: "horseshoe" }, 
+               { text: "Circle", value: "circle" }, 
+               { text: "Classroom", value: "classroom" }, 
+            ],
+
+            typology: "opposing",
+
+            numberOfSeats: 0,
+
+            useParties: true,
+
+            parties: [],
 
             // Group containg the seat shapes:
             seatGroup: null,
+            
         },
 
         created: function() {
@@ -52,10 +68,23 @@ window.onload = function() {
             },
 
             /**
+             * Generate the legislature.
+             */
+            generate: function() {
+                let props = this.generateProps();
+                let group = this.drawLegislature(props);
+
+                console.log('Generating...');
+            },
+
+            /**
              * Generate a props object based on the current state of the 
              * bindings on the Vue-linked form.
              */
             generateProps: function() {
+
+                let parties = this.generateParties();
+
                 return {
                     /**
                      * The arrangment of seating in the legislature, based on
@@ -67,7 +96,7 @@ window.onload = function() {
                      * "circle": e.g. Jordan, Slovenia.
                      * "classroom": Consecutive rows, e.g. China.
                      */ 
-                    typology: "",
+                    typology: this.typology,
 
                     /**
                      * Number of members / seats in the legislature.
@@ -85,8 +114,19 @@ window.onload = function() {
                      * Array of objects describing the parties in the 
                      * legislature. 
                      */
-                    parties: []
+                    parties: parties
                 };
+            },
+
+            /**
+             * Add a political party.
+             */
+            addParty: function() {
+                this.parties.push({
+                    name: "",
+                    numberOfMembers: 0,
+                    color: null
+                });
             },
 
             /**
@@ -101,32 +141,49 @@ window.onload = function() {
              * Draw the legislature based on a props object.
              */
             drawLegislature: function(props) {
+                let group;
+                
                 switch (props.typology) {
                     case "opposing":
-                        
+                        group = this.drawOpposing(props);
                         break;
 
                     case "semicircle":
-
+                        group = this.drawSemicircle(props);
                         break;
 
                     case "horseshoe":
-
+                        group = this.drawHorseshoe()
                         break;
 
                     case "circle":
-
+                        group = this.drawCircle();
                         break;
 
                     default:
                         throw `Typology '${props.typology}' not recognized.`;
                 }
+
+                return group;
             },
 
             /**
-             * 
+             * Draw seats arranged as two opposing benches.
              */
             drawOpposing: function(props) {
+                let group;
+
+                // Draw the 'left bench'. Opposition MPs sit here.
+
+                // Draw the 'right bench'. Govt MPs sit here.
+
+                return group;
+            },
+
+            /**
+             * Draw seats arranged in a semicircle.
+             */
+            drawSemicircle: function(props) {
                 let group;
 
                 
@@ -135,11 +192,36 @@ window.onload = function() {
             },
 
             /**
-             * Draw an individual seat.
-             * seatShape: shape of each seat.
-             * 
+             * Draw seats in two opposing benches, linked by a half-circle.
              */
-            drawSeat: function(seatShape, centre, size) {
+            drawHorseshoe: function(props) {
+                let group;
+
+                
+
+                return group;
+            },
+
+            /**
+             * Draw seats arranged in a circle.
+             */
+            drawCircle: function(props) {
+                let group;
+
+                
+
+                return group;
+            },
+
+
+            /**
+             * Draw an individual seat.
+             * seatShape: Shape of the seat.
+             * color: color to fill the seat with.
+             * centre: Centre point of the seat.
+             * size: Radius of the seat. 
+             */
+            drawSeat: function(seatShape, color, centre, size) {
                 let shape;
 
                 switch(seatShape) {
@@ -163,6 +245,8 @@ window.onload = function() {
                     default:
                         throw `Shape '${seatShape}' not recognized.`;
                 }
+
+                shape.fillColor = color;
 
                 return shape;
             }

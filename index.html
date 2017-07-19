@@ -11,7 +11,77 @@
     <body>
         <canvas class="display" id="display" width="640" height="480"></canvas>
         <div id="vue">
-            
+            <div class="controls">
+                <div class="half">
+                <div class="column">
+                    
+                    <div class="control">
+                        <label>Typology: </label>
+                        <select class="control-elem" v-model="typology">
+                            <option 
+                                v-for="option in typologies" 
+                                v-bind:value="option.value"
+                            >{{ option.text }}</option>
+                        </select>
+                    </div>
+                    <div class="control">
+                        <label>Number of seats: </label>
+                        <input 
+                            class="control-elem" 
+                            v-model.number="numberOfSeats" 
+                            type="number"
+                        >
+                    </div>
+                    
+                </div>
+                </div>
+
+                <div class="half">
+                <div class="column">
+
+                    <div class="control">
+                        <label>Legislature has parties</label>
+                        <input class="control-elem" 
+                            type="checkbox" 
+                            v-model="useParties"
+                        >
+                    </div>
+                    <div class="control" v-if="useParties">
+                        <label>Parties:</label>
+                        <div class="party" v-for="party in parties">
+                            <div class="control">
+                                <label>Name: </label>
+                                <input 
+                                    class="control-elem" 
+                                    v-model="party.name"
+                                >
+                            </div>
+                            <div class="control">
+                                <label>Number of members: </label>
+                                <input 
+                                    class="control-elem" 
+                                    v-model.number="numberOfSeats" 
+                                    type="number"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button 
+                            class="control-elem" 
+                            v-on:click="addParty"
+                        >Add Party</button>
+                    </div>
+                    
+                </div>
+                </div>
+            </div>
+            <div>
+                <button 
+                    id="generate" 
+                    v-on:click="generate"
+                >Generate!</button>
+            </div>
         </div>
     </body>
 
