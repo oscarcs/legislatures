@@ -4,6 +4,8 @@
         <title>Legislatures</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <script src="bin/vue.js"></script>
+        <script src="bin/sortable.js"></script>
+        <script src="bin/vue-draggable.js"></script>
         <script src="bin/paper.js"></script>
         <script src="src/main.js"></script>
     </head>
@@ -48,23 +50,16 @@
                     </div>
                     <div class="control" v-if="useParties">
                         <label>Parties:</label>
-                        <div class="party" v-for="party in parties">
-                            <div class="control">
-                                <label>Name: </label>
-                                <input 
-                                    class="control-elem" 
-                                    v-model="party.name"
-                                >
-                            </div>
-                            <div class="control">
+                        <draggable v-model="parties">
+                            <div v-for="party in parties">
                                 <label>Number of members: </label>
                                 <input 
                                     class="control-elem" 
-                                    v-model.number="numberOfSeats" 
+                                    v-model.number="party.numberOfSeats" 
                                     type="number"
-                                >
+                                >   
                             </div>
-                        </div>
+                        </draggable>
                     </div>
                     <div class="control">
                         <button 

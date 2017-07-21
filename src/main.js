@@ -16,7 +16,6 @@ window.onload = function() {
             numberOfSeats: 0,
 
             useParties: true,
-
             parties: [],
 
             // Group containg the seat shapes:
@@ -67,6 +66,14 @@ window.onload = function() {
 
             },
 
+            onSortable: function(event) {
+                this.list.splice(
+                    event.newIndex, 
+                    0, 
+                    this.list.splice(event.oldIndex, 1)[0]
+                );
+            },
+
             /**
              * Generate the legislature.
              */
@@ -82,9 +89,6 @@ window.onload = function() {
              * bindings on the Vue-linked form.
              */
             generateProps: function() {
-
-                let parties = this.generateParties();
-
                 return {
                     /**
                      * The arrangment of seating in the legislature, based on
@@ -101,7 +105,7 @@ window.onload = function() {
                     /**
                      * Number of members / seats in the legislature.
                      */
-                    numberOfSeats: 0,
+                    numberOfSeats: this.numberOfSeats,
 
                     /**
                      * Seat shape. XML's book uses squares, while Wikipedia uses
@@ -114,7 +118,7 @@ window.onload = function() {
                      * Array of objects describing the parties in the 
                      * legislature. 
                      */
-                    parties: parties
+                    parties: this.parties
                 };
             },
 
@@ -127,14 +131,6 @@ window.onload = function() {
                     numberOfMembers: 0,
                     color: null
                 });
-            },
-
-            /**
-             * Generate a parties object based on the current state of the 
-             * bindings on the Vue-linked form.
-             */
-            generateParties: function() {
-
             },
 
             /**
@@ -173,7 +169,36 @@ window.onload = function() {
             drawOpposing: function(props) {
                 let group;
 
-                // Draw the 'left bench'. Opposition MPs sit here.
+                // Determines the number of rows to columns 
+                // (1 row : RATIO columns)
+                const RATIO = 3.75;
+                const SEAT_SPACING = 5;
+                const SEAT_SIZE = 20; 
+
+                // Calculate the number of rows and columns of seats for the 
+                // opposing benches.
+                let rows = Math.round(Math.sqrt(props.numberOfSeats / RATIO));
+                let columns = Math.round(props.numberOfSeats / rows);
+
+                // Determine which parties are on which bench:
+                let leftBenchParties = [props.parties[0]];
+                let rightBenchParties = [props.parties[1]];
+
+                // Draw the left bench. Opposition MPs sit here.
+                leftBench = [];
+
+                // Variables to track current drawing state.
+                let numberSeatsDrawn = 0;
+                let currentColor = "black";
+
+                for (let i = 0; i < columns; i++) {
+                    for (let j = 0; j < rows; j++) {                        
+
+                        leftBench.push(this.drawSeat('square', ));
+
+                        numberSeatsDrawn++;
+                    }
+                }
 
                 // Draw the 'right bench'. Govt MPs sit here.
 
