@@ -45,8 +45,8 @@ window.onload = function() {
              * Set up the scene.
              */
             initialize: function() {
-                var a = new Point(40, 40);
-                var b = new Point(20, 20)
+                var a = new Point(0, 0);
+                var b = new Point(640, 480)
                 var shape = new Path.Rectangle(a, b);
                 shape.fillColor = "red";
             },

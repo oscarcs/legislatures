@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>Legislatures</title>
+        <link rel="stylesheet" type="text/css" href="bin/bulma.css">
         <link rel="stylesheet" type="text/css" href="styles.css">
         <script src="bin/vue.js"></script>
         <script src="bin/sortable.js"></script>
@@ -11,72 +12,161 @@
     </head>
 
     <body>
+        <div class="section">
         <canvas class="display" id="display" width="640" height="480"></canvas>
-        <div id="vue">
-            <div class="controls">
-                <div class="half">
-                <div class="column">
-                    
-                    <div class="control">
-                        <label>Typology: </label>
-                        <select class="control-elem" v-model="typology">
-                            <option 
-                                v-for="option in typologies" 
-                                v-bind:value="option.value"
-                            >{{ option.text }}</option>
-                        </select>
-                    </div>
-                    <div class="control">
-                        <label>Number of seats: </label>
-                        <input 
-                            class="control-elem" 
-                            v-model.number="numberOfSeats" 
-                            type="number"
-                        >
-                    </div>
-                    
+        <div class="container">
+            <div class="columns" id="vue">
+                <div class="column is-3 ">
+                    <aside class="menu box">
+                        <p class="menu-label">
+                            General
+                        </p>
+                        <ul class="menu-list">
+                            <li><a>Dashboard</a></li>
+                            <li><a>Customers</a></li>
+                        </ul>
+                        <p class="menu-label">
+                            Administration
+                        </p>
+                        <ul class="menu-list">
+                            <li><a>Team Settings</a></li>
+                            <li>
+                            <a class="is-active">Manage Your Team</a>
+                            <ul>
+                                <li><a>Members</a></li>
+                                <li><a>Plugins</a></li>
+                                <li><a>Add a member</a></li>
+                            </ul>
+                            </li>
+                            <li><a>Invitations</a></li>
+                            <li><a>Cloud Storage Environment Settings</a></li>
+                            <li><a>Authentication</a></li>
+                        </ul>
+                        <p class="menu-label">
+                            Transactions
+                        </p>
+                        <ul class="menu-list">
+                            <li><a>Payments</a></li>
+                            <li><a>Transfers</a></li>
+                            <li><a>Balance</a></li>
+                        </ul>
+                    </aside>
                 </div>
-                </div>
-
-                <div class="half">
                 <div class="column">
-
-                    <div class="control">
-                        <label>Legislature has parties</label>
-                        <input class="control-elem" 
-                            type="checkbox" 
-                            v-model="useParties"
-                        >
+                    <div class="box">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                        <strong>Pellentesque risus mi</strong>, tempus quis 
+                        placerat ut, porta nec nulla. Vestibulum rhoncus ac ex 
+                        sit amet fringilla. Nullam gravida purus diam, et dictum 
+                        <a>felis venenatis</a> efficitur. Aenean ac 
+                        <em>eleifend lacus</em>, in mollis lectus. Donec sodales, 
+                        arcu et sollicitudin porttitor, tortor urna tempor ligula, 
+                        id porttitor mi magna a neque. Donec dui urna, vehicula 
+                        et sem eget, facilisis sodales sem.
                     </div>
-                    <div class="control" v-if="useParties">
-                        <label>Parties:</label>
-                        <draggable v-model="parties">
-                            <div v-for="party in parties">
-                                <label>Number of members: </label>
-                                <input 
-                                    class="control-elem" 
-                                    v-model.number="party.numberOfSeats" 
-                                    type="number"
-                                >   
+                    <div class="box">
+                        
+                        <div class="field">                    
+                        <div class="control">
+                            <label class="label">Typology: </label>
+                            <div class="select">
+                                <select v-model="typology">
+                                    <option 
+                                        v-for="option in typologies" 
+                                        v-bind:value="option.value"
+                                    >{{ option.text }}</option>
+                                </select>
                             </div>
-                        </draggable>
+                        </div>
+                        </div>
+
+                        <div class="field">                    
+                        <div class="control">
+                            <label class="label">Number of seats: </label>
+                            <input 
+                                class="input" 
+                                v-model.number="numberOfSeats" 
+                                type="number"
+                            >
+                        </div>
+                        </div>
+
                     </div>
-                    <div class="control">
-                        <button 
-                            class="control-elem" 
-                            v-on:click="addParty"
-                        >Add Party</button>
+                    <div class="box">
+                        <div class="field">
+                        <div class="control">
+                            
+                            <label class="checkbox label">
+                                <input class="checkbox" 
+                                    type="checkbox" 
+                                    v-model="useParties"
+                                >
+                                Legislature has parties
+                            </label>
+
+                        </div>
+                        </div>
+
+                        <div class="field">
+                        <div class="control" v-if="useParties">
+                            <draggable v-model="parties">
+                                <div class="card" v-for="party in parties">
+                                    <header class="card-header">
+                                        <p class="card-header-title">
+                                        {{party.name}}
+                                        </p>
+                                        <a class="card-header-icon">
+                                        <span class="icon">
+                                            <i class="fa fa-angle-down"></i>
+                                        </span>
+                                        </a>
+                                    </header>
+                                    <div class="card-content">                                        
+                                    <div class="content">
+
+                                        <div class="field">
+                                            <label>Name: </label>
+                                        <div class="control">
+                                            <input 
+                                                class="input" 
+                                                type="text"
+                                                v-model="party.name"
+                                            >   
+                                        </div>
+                                        </div>
+
+                                        <div class="field">
+                                            <label>Number of members: </label>
+                                        <div class="control">
+                                            <input 
+                                                class="input" 
+                                                v-model.number="party.numberOfSeats" 
+                                                type="number"
+                                            >   
+                                        </div>
+                                        </div>
+
+                                    </div>
+                                    </div>
+                                </div>
+                            </draggable>
+                        </div>
+                        </div>
+
+                        <div class="field">
+                        <div class="control">
+                            <button 
+                                class="button" 
+                                v-on:click="addParty"
+                            >Add Party</button>
+                        </div>
+                        </div>
+
                     </div>
-                    
-                </div>
                 </div>
             </div>
-            <div>
-                <button 
-                    id="generate" 
-                    v-on:click="generate"
-                >Generate!</button>
-            </div>
+        </div>
+        </div>
         </div>
     </body>
 
