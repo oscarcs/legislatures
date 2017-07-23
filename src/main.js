@@ -1,7 +1,12 @@
 window.onload = function() {
-    let app = new Vue({
+    window.app = new Vue({
         el: '#vue',
         data: {
+
+            jurisdictionName: "",
+
+            legislatureName: "",
+
             // Typology select options
             typologies: [
                { text: "Opposing", value: "opposing" }, 
@@ -17,6 +22,7 @@ window.onload = function() {
 
             useParties: true,
             parties: [],
+            partyCounter: 1, // Track names like 'Party 1', 'Party 2' etc.
 
             // Group containg the seat shapes:
             seatGroup: null,
@@ -126,11 +132,121 @@ window.onload = function() {
              * Add a political party.
              */
             addParty: function() {
+                const colors = [
+                    "#00529F",
+                    "#D82A20",
+                    "#098137",
+                    "#FDE401",
+                    "#501557",
+                    "#F5621E",
+                    "#00AEEF"
+                ];
+                let color = "#FFFFFF";
+                if (this.partyCounter <= colors.length) {
+                    color = colors[this.partyCounter - 1];
+                } 
+
                 this.parties.push({
-                    name: "",
+                    name: `Party ${this.partyCounter++}`,
                     numberOfMembers: 0,
-                    color: null
+                    color: color,
+
+                    // Display variables
+                    collapsed: false
                 });
+            },
+
+            /**
+             * Generate a random party name.
+             * @@TODO: Make this much more comprehensive.
+             */
+            generatePartyName: function() {
+                const prefixes = [
+                    'Labour',
+                    'Democratic',
+                    'Progressive',
+                    'Conservative',
+                    'National',
+                    'Liberal',
+                    'Centrist',
+                    'Social Democratic',
+                    'United',
+                    'Green',
+                    'Christian Democratic',
+                    'Islamic',
+                    'Agrarian',
+                    'Communist',
+                    'Socialist',
+                    'Liberation',
+                    'Justice',
+                    'People\'s',
+                    'Patriotic',
+                    'Libertarian',
+                    'Pirate',
+                    'Civic',
+                ];
+
+                const suffixes = [
+                    ' Front',
+                    ' Alliance',
+                    ' Coalition',
+                    ' League',
+                    ' National Movement',
+                    ' Citizen\'s Movement',
+                    ' Movement',
+                    ' Action Party',
+                    ' Reform Party',
+                    ' Union',
+                    ' Association'
+                ];
+
+                let str = '';
+                let hasJurisdiction = 
+                    this.jurisdictionName !== "" && 
+                    this.jurisdictionName !== null;
+                let frontJurisdiction = false;
+
+                if (Math.random() > 0.6) {
+                    str += 'The ';
+                }
+                else if (hasJurisdiction && Math.random() > 0.7) {
+                    str += `${this.jurisdictionName} `;
+                    frontJurisdiction = true;
+                }
+                else if (Math.random() > 0.85) {
+                    str += 'New ';
+                }
+
+                let p = Math.floor((Math.random() * prefixes.length));
+                str += prefixes[p];
+
+                if (Math.random() > 0.35) {
+                    let s = Math.floor((Math.random() * suffixes.length));
+                    str += suffixes[s];
+                }
+                else {
+                    str += ' Party';
+                }
+
+                if (hasJurisdiction) {
+                    if (Math.random() > 0.8 && !frontJurisdiction) {
+                        if (Math.random() > 0.85) {
+                            str += ` ${this.jurisdictionName}`;
+                        }
+                        else {
+                            str += ` of ${this.jurisdictionName}`;
+                        }
+                    }
+                }
+
+                return str;
+            },
+
+            /**
+             * Delete a political party.
+             */
+            deleteParty: function(party) {
+                this.parties = this.parties.filter(x => x !== party);
             },
 
             /**
@@ -237,7 +353,6 @@ window.onload = function() {
 
                 return group;
             },
-
 
             /**
              * Draw an individual seat.

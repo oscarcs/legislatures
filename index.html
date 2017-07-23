@@ -13,17 +13,17 @@
 
     <body>
         <div class="section">
-        <canvas class="display" id="display" width="640" height="480"></canvas>
+            
+            <canvas class="display" id="display" width="640" height="480"></canvas>
+        
         <div class="container">
             <div class="columns" id="vue">
+                
                 <div class="column is-3 ">
                     <aside class="menu box">
-                        <p class="menu-label">
-                            General
-                        </p>
                         <ul class="menu-list">
-                            <li><a>Dashboard</a></li>
-                            <li><a>Customers</a></li>
+                            <li><a class="is-active">General Settings</a></li>
+                            <li><a>Parties and Groups</a></li>
                         </ul>
                         <p class="menu-label">
                             Administration
@@ -31,7 +31,7 @@
                         <ul class="menu-list">
                             <li><a>Team Settings</a></li>
                             <li>
-                            <a class="is-active">Manage Your Team</a>
+                            <a>Manage Your Team</a>
                             <ul>
                                 <li><a>Members</a></li>
                                 <li><a>Plugins</a></li>
@@ -52,7 +52,9 @@
                         </ul>
                     </aside>
                 </div>
+
                 <div class="column">
+
                     <div class="box">
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                         <strong>Pellentesque risus mi</strong>, tempus quis 
@@ -64,8 +66,31 @@
                         id porttitor mi magna a neque. Donec dui urna, vehicula 
                         et sem eget, facilisis sodales sem.
                     </div>
+
+                    <!-- General Settings: -->
                     <div class="box">
-                        
+                        <h1 class="title is-4">General Settings</h1>
+
+                        <div class="field">                    
+                        <div class="control">
+                            <label class="label">Jurisdiction Name: </label>
+                            <input 
+                                class="input" 
+                                v-model.number="jurisdictionName"
+                            >
+                        </div>
+                        </div>
+
+                        <div class="field">                    
+                        <div class="control">
+                            <label class="label">Legislature Name: </label>
+                            <input 
+                                class="input" 
+                                v-model.number="legislatureName"
+                            >
+                        </div>
+                        </div>
+
                         <div class="field">                    
                         <div class="control">
                             <label class="label">Typology: </label>
@@ -92,7 +117,11 @@
                         </div>
 
                     </div>
+
+                    <!-- Party Settings: -->
                     <div class="box">
+                        <h1 class="title is-4">Parties and Groups</h1>
+                        
                         <div class="field">
                         <div class="control">
                             
@@ -107,32 +136,55 @@
                         </div>
                         </div>
 
-                        <div class="field">
-                        <div class="control" v-if="useParties">
+                        <div v-if="useParties" class="columns">
+
+                        <div v-if="parties.length > 0" class="column is-8">
                             <draggable v-model="parties">
                                 <div class="card" v-for="party in parties">
+                                    
                                     <header class="card-header">
                                         <p class="card-header-title">
                                         {{party.name}}
                                         </p>
+                                        <a 
+                                            class="card-header-icon"
+                                            v-on:click="party.collapsed = !party.collapsed"
+                                        >
+                                            <span 
+                                                v-if="party.collapsed" 
+                                                class="icon"
+                                            >◄</span>
+                                            <span 
+                                                v-if="!party.collapsed" 
+                                                class="icon"
+                                            >▼</span>
+                                        </a>
                                         <a class="card-header-icon">
-                                        <span class="icon">
-                                            <i class="fa fa-angle-down"></i>
-                                        </span>
+                                            <span 
+                                                v-on:click="deleteParty(party)" 
+                                                class="icon"
+                                            >🗙</span>
                                         </a>
                                     </header>
-                                    <div class="card-content">                                        
+
+                                    <div v-if="!party.collapsed" class="card-content">                                        
                                     <div class="content">
 
-                                        <div class="field">
-                                            <label>Name: </label>
-                                        <div class="control">
-                                            <input 
-                                                class="input" 
-                                                type="text"
-                                                v-model="party.name"
-                                            >   
-                                        </div>
+                                        <div class="field has-addons">
+                                            <div class="control is-expanded">
+                                                <input 
+                                                    class="input" 
+                                                    type="text"
+                                                    placeholder="Party Name"
+                                                    v-model="party.name"
+                                                >   
+                                            </div>
+                                            <div class="control">
+                                                <a 
+                                                    v-on:click="party.name=generatePartyName()"
+                                                    class="button"
+                                                >Generate</a>
+                                            </div>
                                         </div>
 
                                         <div class="field">
@@ -146,12 +198,28 @@
                                         </div>
                                         </div>
 
+                                        <div class="field">
+                                            <label>Color: </label>
+                                        <div class="control">
+                                            <input 
+                                                class="input" 
+                                                type="color"
+                                                v-model="party.color"
+                                            >   
+                                        </div>
+                                        </div>
+
                                     </div>
                                     </div>
                                 </div>
                             </draggable>
-                        </div>
-                        </div>
+                        </div> <!-- left column -->
+
+                        <div class="column">
+                            Yozaeee
+                        </div> <!-- right column -->
+
+                        </div> <!-- columns -->
 
                         <div class="field">
                         <div class="control">
@@ -161,8 +229,14 @@
                             >Add Party</button>
                         </div>
                         </div>
+                        
 
                     </div>
+
+                    <span class="is-pulled-right">
+                        <a class="button" disabled>Export as SVG</a>
+                        <a v-on:click="generate()" class="button is-success">Generate</a>
+                    </span>
                 </div>
             </div>
         </div>
