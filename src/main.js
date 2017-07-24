@@ -53,8 +53,8 @@ window.onload = function() {
             initialize: function() {
                 var a = new Point(0, 0);
                 var b = new Point(640, 480)
-                var shape = new Path.Rectangle(a, b);
-                shape.fillColor = "red";
+                //var shape = new Path.Rectangle(a, b);
+                //shape.fillColor = "red";
             },
 
             /**
@@ -81,7 +81,7 @@ window.onload = function() {
             },
 
             /**
-             * Generate the legislature.
+             * Generate the legislature diagram.
              */
             generate: function() {
                 let props = this.generateProps();
@@ -192,7 +192,7 @@ window.onload = function() {
                     ' Coalition',
                     ' League',
                     ' National Movement',
-                    ' Citizen\'s Movement',
+                    ' Citizens\' Movement',
                     ' Movement',
                     ' Action Party',
                     ' Reform Party',
@@ -283,41 +283,119 @@ window.onload = function() {
              * Draw seats arranged as two opposing benches.
              */
             drawOpposing: function(props) {
-                let group;
-
+                
                 // Determines the number of rows to columns 
                 // (1 row : RATIO columns)
+                // const RATIO = 2.75;
                 const RATIO = 3.75;
+
                 const SEAT_SPACING = 5;
                 const SEAT_SIZE = 20; 
 
-                // Calculate the number of rows and columns of seats for the 
-                // opposing benches.
-                let rows = Math.round(Math.sqrt(props.numberOfSeats / RATIO));
-                let columns = Math.round(props.numberOfSeats / rows);
+                // Get the total number of seats and the seat-color mapping 
+                // for each parliamentary group / side of the chamber.
+                function getTotalsBySide(parties) {
+                    let total = 0;
+                    let seats = [];
 
-                // Determine which parties are on which bench:
-                let leftBenchParties = [props.parties[0]];
-                let rightBenchParties = [props.parties[1]];
+                    for (let i = 0; i < parties.length; i++) {
+                        total += parties[i].numberOfMembers;
+                        seats.push({ 
+                            num: parties[i].numberOfMembers,
+                            color: parties[i].color
+                        });
+                    }
+                    return { total: total, seats: seats };
+                }
 
-                // Draw the left bench. Opposition MPs sit here.
-                leftBench = [];
+                // Get the color of the next seat. We decrement the nunber of
+                // seats in each parliamentary group each time. 
+                function getNextColor(seatsByParty) {
+                    let i = 0;
+                    while (seatsByParty[i].num === 0) {
+                        i++;
+                    }
 
-                // Variables to track current drawing state.
-                let numberSeatsDrawn = 0;
-                let currentColor = "black";
+                    seatsByParty[i].num--;
+                    return seatsByParty[i].color;
+                }
 
-                for (let i = 0; i < columns; i++) {
-                    for (let j = 0; j < rows; j++) {                        
+                // Draw a bench.
+                let drawSeat = this.drawSeat;
+                function drawBench(
+                    rows, cols, // Rows and cols of seats.
+                    offset_x, offset_y, // Starting point for drawing.
+                    total, seatsByParty, group // Bench variables.
+                ) {
+                    let numberSeatsDrawn = 0;
+                    let currentColor = "black";
 
-                        leftBench.push(this.drawSeat('square', ));
+                    for (let i = 0; i < cols; i++) {
+                        for (let j = 0; j < rows; j++) {                        
+                            
+                            if (numberSeatsDrawn >= total) break;
 
-                        numberSeatsDrawn++;
+                            let center = new Point(
+                                i * (SEAT_SIZE + SEAT_SPACING), 
+                                j * (SEAT_SIZE + SEAT_SPACING)
+                            );
+                            center.x += offset_x;
+                            center.y += offset_y;
+
+                            currentColor = getNextColor(seatsByParty);
+
+                            group.push(
+                                drawSeat(
+                                    'square', 
+                                    currentColor, 
+                                    center, 
+                                    SEAT_SIZE
+                                )
+                            );
+
+                            numberSeatsDrawn++;
+                        }
                     }
                 }
 
-                // Draw the 'right bench'. Govt MPs sit here.
+                // Determine which parties are on which bench:
+                let rightBenchParties = [
+                    props.parties[0],
+                    props.parties[3],
+                    props.parties[4],
+                    props.parties[5],
+                ];
+                let leftBenchParties = [
+                    props.parties[1], 
+                    props.parties[2],
+                    props.parties[6],
+                ];
 
+                // Variables for the left bench:
+                let leftBench = [];
+                let left = getTotalsBySide(leftBenchParties);
+                console.log(left.total, left.seats);
+
+                // Calculate the number of rows and columns of seats for the 
+                // opposing benches.
+                let rows = Math.ceil(Math.sqrt(left.total / RATIO));
+                let cols = Math.ceil(left.total / rows);
+
+                // Draw the left bench. Opposition MPs sit here.
+                drawBench(rows, cols, 40, 40, left.total, left.seats, leftBench);
+
+
+                // Variables for the right bench:
+                let rightBench = [];
+                let right = getTotalsBySide(rightBenchParties);
+                console.log(right.total, right.seats);
+
+                cols = Math.ceil(right.total / rows);
+
+                // Draw the right bench. Govt MPs sit here.
+                drawBench(rows, cols, 40, 240, right.total, right.seats, leftBench);
+
+                let group = new Group(leftBench);
                 return group;
             },
 
@@ -358,26 +436,28 @@ window.onload = function() {
              * Draw an individual seat.
              * seatShape: Shape of the seat.
              * color: color to fill the seat with.
-             * centre: Centre point of the seat.
+             * center: Center point of the seat.
              * size: Radius of the seat. 
              */
-            drawSeat: function(seatShape, color, centre, size) {
+            drawSeat: function(seatShape, color, center, size) {
                 let shape;
+
+                console.log(center);
 
                 switch(seatShape) {
                     case 'circle':
                         let radii = new Point(size, size);
-                        shape = new Path.Circle(centre, radii);
+                        shape = new Path.Circle(center, radii);
                         break;
 
                     case 'square':
                         let b = new Point(
-                            centre.x - size / 2, 
-                            centre.y - size / 2
+                            center.x - size / 2, 
+                            center.y - size / 2
                         );
                         let a = new Point(
-                            centre.x + size / 2, 
-                            centre.y + size / 2
+                            center.x + size / 2, 
+                            center.y + size / 2
                         );
                         shape = new Path.Rectangle(a, b);
                         break;
