@@ -153,7 +153,7 @@
                                             <span 
                                                 v-if="party.collapsed" 
                                                 class="icon"
-                                            >◄</span>
+                                            >►</span>
                                             <span 
                                                 v-if="!party.collapsed" 
                                                 class="icon"
@@ -215,8 +215,56 @@
                             </draggable>
                         </div> <!-- left column -->
 
-                        <div class="column">
-                            Yozaeee
+                        <div class="column" v-if="parties.length > 0">
+                            
+                            <nav class="panel">
+                                <p class="panel-heading">
+                                    Government Bench
+                                </p>
+                                <draggable 
+                                    v-model="government" 
+                                    class="panel-drag" 
+                                    :options="{ group: 'parties' }"
+                                >
+                                <div v-for="party in government" class="panel-block">
+                                    <span class="panel-icon">☰</span>
+                                    {{party.name}}
+                                </div>
+                                </draggable>
+                            </nav>
+
+                            <nav class="panel">
+                                <p class="panel-heading">
+                                    Opposition Bench
+                                </p>
+                                <draggable 
+                                    v-model="opposition" 
+                                    class="panel-drag" 
+                                    :options="{ group: 'parties' }"
+                                >
+                                <div v-for="party in opposition" class="panel-block">
+                                    <span class="panel-icon">☰</span>
+                                    {{party.name}}
+                                </div>
+                                </draggable>
+                            </nav>
+
+                            <nav class="panel">
+                                <p class="panel-heading">
+                                    Crossbenches
+                                </p>
+                                <draggable 
+                                    v-model="crossbench" 
+                                    class="panel-drag" 
+                                    :options="{ group: 'parties' }"
+                                >
+                                <div v-for="party in crossbench" class="panel-block">
+                                    <span class="panel-icon">☰</span>
+                                    {{party.name}}
+                                </div>
+                                </draggable>
+                            </nav>
+
                         </div> <!-- right column -->
 
                         </div> <!-- columns -->

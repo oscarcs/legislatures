@@ -23,6 +23,9 @@ window.onload = function() {
             useParties: true,
             parties: [],
             partyCounter: 1, // Track names like 'Party 1', 'Party 2' etc.
+            government: [],
+            crossbench: [],
+            opposition: [],
 
             // Group containg the seat shapes:
             seatGroup: null,
@@ -146,14 +149,17 @@ window.onload = function() {
                     color = colors[this.partyCounter - 1];
                 } 
 
-                this.parties.push({
+                let party = {
                     name: `Party ${this.partyCounter++}`,
                     numberOfMembers: 0,
                     color: color,
 
                     // Display variables
                     collapsed: false
-                });
+                }
+
+                this.parties.push(party);
+                this.government.push(party);
             },
 
             /**
@@ -247,6 +253,9 @@ window.onload = function() {
              */
             deleteParty: function(party) {
                 this.parties = this.parties.filter(x => x !== party);
+                this.government = this.government.filter(x => x !== party);
+                this.crossbench = this.crossbench.filter(x => x !== party);
+                this.opposition = this.opposition.filter(x => x !== party);
             },
 
             /**
@@ -359,17 +368,8 @@ window.onload = function() {
                 }
 
                 // Determine which parties are on which bench:
-                let rightBenchParties = [
-                    props.parties[0],
-                    props.parties[3],
-                    props.parties[4],
-                    props.parties[5],
-                ];
-                let leftBenchParties = [
-                    props.parties[1], 
-                    props.parties[2],
-                    props.parties[6],
-                ];
+                let rightBenchParties = this.government.concat([]);
+                let leftBenchParties = this.opposition.concat(this.crossbench);
 
                 // Variables for the left bench:
                 let leftBench = [];
@@ -441,9 +441,7 @@ window.onload = function() {
              */
             drawSeat: function(seatShape, color, center, size) {
                 let shape;
-
-                console.log(center);
-
+                
                 switch(seatShape) {
                     case 'circle':
                         let radii = new Point(size, size);
