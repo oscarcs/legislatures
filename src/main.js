@@ -3,10 +3,33 @@ window.onload = function() {
         el: '#vue',
         data: {
 
+            /**
+             * Data:
+             */
+
+            // General settings:
             jurisdictionName: "",
-
             legislatureName: "",
+            typology: "opposing",
+            numberOfSeats: 0,
 
+            // Parties and groups:
+            useParties: true,
+            parties: [],
+            government: [],
+            crossbench: [],
+            opposition: [],
+
+            // Load and save:
+            dataEntry: "",
+
+            /**
+             * Display properties:
+             */
+
+            // Group containg the seat shapes:
+            seatGroup: null,
+            
             // Typology select options
             typologies: [
                { text: "Opposing", value: "opposing" }, 
@@ -16,20 +39,6 @@ window.onload = function() {
                { text: "Classroom", value: "classroom" }, 
             ],
 
-            typology: "opposing",
-
-            numberOfSeats: 0,
-
-            useParties: true,
-            parties: [],
-            partyCounter: 1, // Track names like 'Party 1', 'Party 2' etc.
-            government: [],
-            crossbench: [],
-            opposition: [],
-
-            // Group containg the seat shapes:
-            seatGroup: null,
-            
         },
 
         created: function() {
@@ -81,6 +90,77 @@ window.onload = function() {
                     0, 
                     this.list.splice(event.oldIndex, 1)[0]
                 );
+            },
+
+            /**
+             * Serialize the data to JSON
+             */
+            save: function() {
+
+                let parties = [];
+                for (let party of this.parties) {
+                    
+                    let group = "";
+                    if (this.government.indexOf(party) !== -1) {
+                        group = "government";
+                    }
+                    else if (this.opposition.indexOf(party) !== -1) {
+                        group = "opposition";
+                    }
+                    else if (this.crossbench.indexOf(party) !== -1) {
+                        group = "crossbench";
+                    }
+
+                    parties.push({
+                        name: party.name,     
+                        numberOfMembers: party.numberOfMembers,       
+                        color: party.color,
+                        group: group        
+                    });
+                }
+                
+                var obj = {
+                    // General
+                    jurisdictionName: this.jurisdictionName,
+                    legislatureName: this.legislatureName,
+                    typology: this.typology,
+                    numberOfSeats: this.numberOfSeats,
+
+                    // Parties
+                    useParties: this.useParties,
+                    parties: parties,
+                };
+
+                console.log(JSON.stringify(obj));
+                return JSON.stringify(obj);
+            },
+
+            /**
+             * Load settings 
+             */
+            load: function(data) {
+                var obj = JSON.parse(data);
+
+                // General
+                this.jurisdictionName = obj.jurisdictionName;
+                this.legislatureName = obj.legislatureName;
+                this.typology = obj.typology;
+                this.numberOfSeats = obj.numberOfSeats;
+
+                // Parties
+                this.useParties = obj.useParties;
+                
+                this.parties = [];
+                this.government = [];
+                this.crossbench = [];
+                this.opposition = [];
+                
+                for (let party of obj.parties) {
+                    this.parties.push(party);
+                    this[party.group].push(party);
+
+                    delete party.group;
+                }
             },
 
             /**
@@ -145,12 +225,12 @@ window.onload = function() {
                     "#00AEEF"
                 ];
                 let color = "#FFFFFF";
-                if (this.partyCounter <= colors.length) {
-                    color = colors[this.partyCounter - 1];
+                if ((this.parties.length + 1) <= colors.length) {
+                    color = colors[this.parties.length];
                 } 
 
                 let party = {
-                    name: `Party ${this.partyCounter++}`,
+                    name: `Party ${this.parties.length + 1}`,
                     numberOfMembers: 0,
                     color: color,
 

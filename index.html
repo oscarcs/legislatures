@@ -24,6 +24,7 @@
                         <ul class="menu-list">
                             <li><a class="is-active">General Settings</a></li>
                             <li><a>Parties and Groups</a></li>
+                            <li><a>Load/Save Data</a></li>
                         </ul>
                         <p class="menu-label">
                             Administration
@@ -279,7 +280,24 @@
                         </div>
                         
 
-                    </div>
+                    </div> <!-- box -->
+
+                    <div class="box">
+                        <h1 class="title is-4">Load/Save Data</h1>
+
+                        <div class="field">                    
+                        <div class="control">
+                            <textarea 
+                                class="textarea" 
+                                v-model="dataEntry"
+                            ></textarea>
+                        </div>
+                        </div>
+
+                        <a v-on:click="load(dataEntry)" class="button is-success">Load</a>
+                        <a v-on:click="dataEntry = save()" class="button is-success">Save</a>
+
+                    </div> <!-- box -->
 
                     <span class="is-pulled-right">
                         <a class="button" disabled>Export as SVG</a>
