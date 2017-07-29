@@ -24,49 +24,13 @@
                         <ul class="menu-list">
                             <li><a class="is-active">General Settings</a></li>
                             <li><a>Parties and Groups</a></li>
+                            <li><a>Drawing Settings</a></li>
                             <li><a>Load/Save Data</a></li>
-                        </ul>
-                        <p class="menu-label">
-                            Administration
-                        </p>
-                        <ul class="menu-list">
-                            <li><a>Team Settings</a></li>
-                            <li>
-                            <a>Manage Your Team</a>
-                            <ul>
-                                <li><a>Members</a></li>
-                                <li><a>Plugins</a></li>
-                                <li><a>Add a member</a></li>
-                            </ul>
-                            </li>
-                            <li><a>Invitations</a></li>
-                            <li><a>Cloud Storage Environment Settings</a></li>
-                            <li><a>Authentication</a></li>
-                        </ul>
-                        <p class="menu-label">
-                            Transactions
-                        </p>
-                        <ul class="menu-list">
-                            <li><a>Payments</a></li>
-                            <li><a>Transfers</a></li>
-                            <li><a>Balance</a></li>
                         </ul>
                     </aside>
                 </div>
 
                 <div class="column">
-
-                    <div class="box">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                        <strong>Pellentesque risus mi</strong>, tempus quis 
-                        placerat ut, porta nec nulla. Vestibulum rhoncus ac ex 
-                        sit amet fringilla. Nullam gravida purus diam, et dictum 
-                        <a>felis venenatis</a> efficitur. Aenean ac 
-                        <em>eleifend lacus</em>, in mollis lectus. Donec sodales, 
-                        arcu et sollicitudin porttitor, tortor urna tempor ligula, 
-                        id porttitor mi magna a neque. Donec dui urna, vehicula 
-                        et sem eget, facilisis sodales sem.
-                    </div>
 
                     <!-- General Settings: -->
                     <div class="box">
@@ -137,9 +101,18 @@
                         </div>
                         </div>
 
+
                         <div v-if="useParties" class="columns">
 
                         <div v-if="parties.length > 0" class="column is-8">
+                        
+                            <div v-if="numberOfSeats > 0" class="field">
+                            <div class="control">
+                                Remaining seats: {{ numberOfSeats - 
+                                    parties.reduce((acc, cur) => acc += cur.numberOfMembers, 0) }}
+                            </div>
+                            </div>
+
                             <draggable v-model="parties">
                                 <div class="card" v-for="party in parties">
                                     
@@ -283,6 +256,23 @@
                     </div> <!-- box -->
 
                     <div class="box">
+                        <h1 class="title is-4">Drawing Settings</h1>
+
+                        <div class="field">                    
+                        <div class="control">
+                            <label class="label">Seat shape: </label>
+                            <div class="select">
+                                <select v-model="seatShape">
+                                    <option value="square">Square</option>
+                                    <option value="circle">Circle</option>
+                                </select>
+                            </div>
+                        </div>
+                        </div>
+
+                    </div> <!-- box -->
+
+                    <div class="box">
                         <h1 class="title is-4">Load/Save Data</h1>
 
                         <div class="field">                    
@@ -298,6 +288,7 @@
                         <a v-on:click="dataEntry = save()" class="button is-success">Save</a>
 
                     </div> <!-- box -->
+
 
                     <span class="is-pulled-right">
                         <a class="button" disabled>Export as SVG</a>

@@ -20,15 +20,15 @@ window.onload = function() {
             crossbench: [],
             opposition: [],
 
+            // Display settings:
+            seatShape: "square",
+
             // Load and save:
             dataEntry: "",
 
             /**
              * Display properties:
              */
-
-            // Group containg the seat shapes:
-            seatGroup: null,
             
             // Typology select options
             typologies: [
@@ -164,9 +164,18 @@ window.onload = function() {
             },
 
             /**
+             * Clear the canvas in preparation for drawing.
+             */
+            clear: function() {
+                project.activeLayer.removeChildren();
+            },
+
+            /**
              * Generate the legislature diagram.
              */
             generate: function() {
+                this.clear();
+
                 let props = this.generateProps();
                 let group = this.drawLegislature(props);
 
@@ -201,7 +210,7 @@ window.onload = function() {
                      * circles.
                      * Possible values: "circle", "square"
                      */
-                    seatShape: "",
+                    seatShape: this.seatShape,
 
                     /**
                      * Array of objects describing the parties in the 
@@ -435,7 +444,7 @@ window.onload = function() {
 
                             group.push(
                                 drawSeat(
-                                    'square', 
+                                    props.seatShape, 
                                     currentColor, 
                                     center, 
                                     SEAT_SIZE
