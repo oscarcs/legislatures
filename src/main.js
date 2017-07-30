@@ -39,6 +39,11 @@ window.onload = function() {
                { text: "Classroom", value: "classroom" }, 
             ],
 
+            error: {
+                title: "",
+                message: "",
+            },
+
         },
 
         created: function() {
@@ -129,6 +134,9 @@ window.onload = function() {
                     // Parties
                     useParties: this.useParties,
                     parties: parties,
+
+                    // Drawing settings
+                    seatShape: this.seatShape,
                 };
 
                 console.log(JSON.stringify(obj));
@@ -149,7 +157,7 @@ window.onload = function() {
 
                 // Parties
                 this.useParties = obj.useParties;
-                
+
                 this.parties = [];
                 this.government = [];
                 this.crossbench = [];
@@ -161,6 +169,9 @@ window.onload = function() {
 
                     delete party.group;
                 }
+                
+                // Drawing settings
+                this.seatShape = obj.seatShape;
             },
 
             /**
@@ -168,6 +179,10 @@ window.onload = function() {
              */
             clear: function() {
                 project.activeLayer.removeChildren();
+
+                // Clear error:
+                this.error.title = "";
+                this.error.message = "";
             },
 
             /**
@@ -409,6 +424,10 @@ window.onload = function() {
                 // Get the color of the next seat. We decrement the nunber of
                 // seats in each parliamentary group each time. 
                 function getNextColor(seatsByParty) {
+                    if (seatsByParty.length === 0) {
+                        return;
+                    }
+                    
                     let i = 0;
                     while (seatsByParty[i].num === 0) {
                         i++;
@@ -459,6 +478,15 @@ window.onload = function() {
                 // Determine which parties are on which bench:
                 let rightBenchParties = this.government.concat([]);
                 let leftBenchParties = this.opposition.concat(this.crossbench);
+
+                if (rightBenchParties.length === 0 || 
+                    leftBenchParties.length === 0
+                ) {
+                    this.error.title = "Bench cannot be empty";
+                    this.error.message = 
+                        ["Both benches in a legislature with the 'opposing' ",
+                        "typology must have at least one member."].join('');
+                }
 
                 // Variables for the left bench:
                 let leftBench = [];
@@ -533,7 +561,7 @@ window.onload = function() {
                 
                 switch(seatShape) {
                     case 'circle':
-                        let radii = new Point(size, size);
+                        let radii = new Point(size / 2, size / 2);
                         shape = new Path.Circle(center, radii);
                         break;
 

@@ -32,6 +32,15 @@
 
                 <div class="column">
 
+                    <article v-if="error.title !== ''" class="message is-danger">
+                        <div class="message-header">
+                            <p><strong>Error: </strong>{{error.title}}</p>
+                        </div>
+                        <div class="message-body">
+                            {{error.message}}
+                        </div>
+                    </article>
+
                     <!-- General Settings: -->
                     <div class="box">
                         <h1 class="title is-4">General Settings</h1>
