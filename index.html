@@ -21,12 +21,22 @@
                 
                 <div class="column is-3 ">
                     <aside class="menu box">
-                        <ul class="menu-list">
-                            <li><a class="is-active">General Settings</a></li>
-                            <li><a>Parties and Groups</a></li>
-                            <li><a>Drawing Settings</a></li>
-                            <li><a>Load/Save Data</a></li>
-                        </ul>
+                    <ul class="menu-list">
+                        
+                        <template v-for="item of menuItems">
+                            <li v-on:click="() => currentMenu = item.name">
+                                <a 
+                                    class="is-active"
+                                    v-if="item.name === currentMenu"
+                                >
+                                    {{item.text}}
+                                </a>
+                                
+                                <a v-else>{{item.text}}</a>
+                            </li>
+                        </template>
+                    
+                    </ul>
                     </aside>
                 </div>
 
@@ -42,7 +52,7 @@
                     </article>
 
                     <!-- General Settings: -->
-                    <div class="box">
+                    <div v-if="currentMenu === 'general'" class="box">
                         <h1 class="title is-4">General Settings</h1>
 
                         <div class="field">                    
@@ -93,7 +103,7 @@
                     </div>
 
                     <!-- Party Settings: -->
-                    <div class="box">
+                    <div v-if="currentMenu === 'parties-groups'" class="box">
                         <h1 class="title is-4">Parties and Groups</h1>
                         
                         <div class="field">
@@ -264,7 +274,8 @@
 
                     </div> <!-- box -->
 
-                    <div class="box">
+                    <!-- Drawing Settings: -->
+                    <div v-if="currentMenu === 'drawing'" class="box">
                         <h1 class="title is-4">Drawing Settings</h1>
 
                         <div class="field">                    
@@ -281,7 +292,8 @@
 
                     </div> <!-- box -->
 
-                    <div class="box">
+                    <!-- Load/Save Data: -->
+                    <div v-if="currentMenu === 'load-save'" class="box">
                         <h1 class="title is-4">Load/Save Data</h1>
 
                         <div class="field">                    

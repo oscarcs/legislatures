@@ -44,6 +44,14 @@ window.onload = function() {
                 message: "",
             },
 
+            // menu control
+            currentMenu: "general",
+            menuItems: [
+                { text: "General Settings", name: "general" },
+                { text: "Parties and Groups", name: "parties-groups" },
+                { text: "Drawing Settings", name: "drawing" },
+                { text: "Load/Save Data", name: "load-save" },
+            ],
         },
 
         created: function() {
