@@ -155,7 +155,14 @@ window.onload = function() {
              * Load settings 
              */
             load: function(data) {
-                var obj = JSON.parse(data);
+                try {
+                    var obj = JSON.parse(data);
+                }
+                catch (e) {
+                    this.error.title = "Could not parse JSON";
+                    this.error.message = e.message;
+                    return;
+                }
 
                 // General
                 this.jurisdictionName = obj.jurisdictionName;
@@ -394,7 +401,13 @@ window.onload = function() {
                         break;
 
                     default:
-                        throw `Typology '${props.typology}' not recognized.`;
+                        this.error.title = 
+                            `Typology '${props.typology}' not recognized.`;
+                        this.error.message = [ 
+                            "Typology must be one of 'Opposing', 'Semicircle', ",
+                            "'Horseshoe', 'Circle', or 'Classroom'"
+                        ].join('');
+                        return;
                 }
 
                 return group;
@@ -586,7 +599,8 @@ window.onload = function() {
                         break;
 
                     default:
-                        throw `Shape '${seatShape}' not recognized.`;
+                        this.error.title = `Shape '${seatShape}' not recognized.`;
+                        this.error.message = this.error.title;
                 }
 
                 shape.fillColor = color;
