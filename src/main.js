@@ -29,7 +29,10 @@ window.onload = function() {
             /**
              * Display properties:
              */
-            
+
+            WIDTH: 0,
+            HEIGHT: 0,
+
             // Typology select options
             typologies: [
                { text: "Opposing", value: "opposing" }, 
@@ -73,13 +76,18 @@ window.onload = function() {
         methods: {
 
             /**
-             * Set up the scene.
+             * Set up the app.
              */
             initialize: function() {
-                var a = new Point(0, 0);
-                var b = new Point(640, 480)
-                //var shape = new Path.Rectangle(a, b);
-                //shape.fillColor = "red";
+                // Load from localStorage.
+                let local = localStorage.getItem("data"); 
+                if (local !== null) {
+                    this.load(local);
+                    this.dataEntry = local;
+                }
+
+                WIDTH = document.getElementById('display').width;
+                HEIGHT = document.getElementById('display').height;
             },
 
             /**
@@ -147,8 +155,11 @@ window.onload = function() {
                     seatShape: this.seatShape,
                 };
 
-                console.log(JSON.stringify(obj));
-                return JSON.stringify(obj);
+                let json = JSON.stringify(obj);
+
+                localStorage.setItem("data", json);
+
+                return json;
             },
 
             /**
@@ -204,7 +215,11 @@ window.onload = function() {
              * Generate the legislature diagram.
              */
             generate: function() {
+                // Clear the drawn data:
                 this.clear();
+
+                // Save the settings to localStorage.
+                this.save();
 
                 let props = this.generateProps();
                 let group = this.drawLegislature(props);
@@ -381,23 +396,22 @@ window.onload = function() {
              * Draw the legislature based on a props object.
              */
             drawLegislature: function(props) {
-                let group;
-                
+
                 switch (props.typology) {
                     case "opposing":
-                        group = this.drawOpposing(props);
+                        this.drawOpposing(props);
                         break;
 
                     case "semicircle":
-                        group = this.drawSemicircle(props);
+                        this.drawSemicircle(props);
                         break;
 
                     case "horseshoe":
-                        group = this.drawHorseshoe()
+                        this.drawHorseshoe()
                         break;
 
                     case "circle":
-                        group = this.drawCircle();
+                        this.drawCircle();
                         break;
 
                     default:
@@ -409,8 +423,6 @@ window.onload = function() {
                         ].join('');
                         return;
                 }
-
-                return group;
             },
 
             /**
@@ -420,15 +432,13 @@ window.onload = function() {
                 
                 // Determines the number of rows to columns 
                 // (1 row : RATIO columns)
-                // const RATIO = 2.75;
                 const RATIO = 3.75;
-
                 const SEAT_SPACING = 5;
                 const SEAT_SIZE = 20; 
 
                 // Get the total number of seats and the seat-color mapping 
                 // for each parliamentary group / side of the chamber.
-                function getTotalsBySide(parties) {
+                function getSeatData(parties) {
                     let total = 0;
                     let seats = [];
 
@@ -444,25 +454,25 @@ window.onload = function() {
 
                 // Get the color of the next seat. We decrement the nunber of
                 // seats in each parliamentary group each time. 
-                function getNextColor(seatsByParty) {
-                    if (seatsByParty.length === 0) {
+                function getNextColor(seatData) {
+                    if (seatData.length === 0) {
                         return;
                     }
                     
                     let i = 0;
-                    while (seatsByParty[i].num === 0) {
+                    while (seatData[i].num === 0) {
                         i++;
                     }
 
-                    seatsByParty[i].num--;
-                    return seatsByParty[i].color;
+                    seatData[i].num--;
+                    return seatData[i].color;
                 }
 
                 // Draw a bench.
                 let drawSeat = this.drawSeat;
                 function drawBench(
                     rows, cols, // Rows and cols of seats.
-                    offset_x, offset_y, // Starting point for drawing.
+                    offsetX, offsetY, // Starting point for drawing.
                     total, seatsByParty, group // Bench variables.
                 ) {
                     let numberSeatsDrawn = 0;
@@ -477,8 +487,8 @@ window.onload = function() {
                                 i * (SEAT_SIZE + SEAT_SPACING), 
                                 j * (SEAT_SIZE + SEAT_SPACING)
                             );
-                            center.x += offset_x;
-                            center.y += offset_y;
+                            center.x += offsetX;
+                            center.y += offsetY;
 
                             currentColor = getNextColor(seatsByParty);
 
@@ -509,65 +519,61 @@ window.onload = function() {
                         "typology must have at least one member."].join('');
                 }
 
-                // Variables for the left bench:
-                let leftBench = [];
-                let left = getTotalsBySide(leftBenchParties);
-                console.log(left.total, left.seats);
+                let rows, cols;
+                let offsetX, offsetY;
+                let seats = [];
+                
+                // Generate the left bench:
+                {
+                    let left = getSeatData(leftBenchParties);
 
-                // Calculate the number of rows and columns of seats for the 
-                // opposing benches.
-                let rows = Math.ceil(Math.sqrt(left.total / RATIO));
-                let cols = Math.ceil(left.total / rows);
+                    // Calculate the number of rows and columns of seats for the 
+                    // opposing benches.
+                    rows = Math.ceil(Math.sqrt(left.total / RATIO));
+                    cols = Math.ceil(left.total / rows);
 
-                // Draw the left bench. Opposition MPs sit here.
-                drawBench(rows, cols, 40, 40, left.total, left.seats, leftBench);
+                    offsetX = WIDTH / 2 - ((cols / 2) * (SEAT_SIZE + SEAT_SPACING));
+                    offsetY = 40;
+                    console.log(offsetX, offsetY);
 
+                    // Draw the left bench. Opposition MPs sit here.
+                    drawBench(rows, cols, offsetX, offsetY, left.total, left.seats, seats);
+                }
 
-                // Variables for the right bench:
-                let rightBench = [];
-                let right = getTotalsBySide(rightBenchParties);
-                console.log(right.total, right.seats);
+                // Generate the right bench:
+                {
+                    let right = getSeatData(rightBenchParties);
 
-                cols = Math.ceil(right.total / rows);
+                    cols = Math.ceil(right.total / rows);
 
-                // Draw the right bench. Govt MPs sit here.
-                drawBench(rows, cols, 40, 240, right.total, right.seats, leftBench);
+                    offsetY = offsetY + (rows + 3) * (SEAT_SIZE + SEAT_SPACING);
 
-                let group = new Group(leftBench);
-                return group;
+                    // Draw the right bench. Govt MPs sit here.
+                    drawBench(rows, cols, offsetX, offsetY, right.total, right.seats, seats);
+                }
+
+                let group = new Group(seats);
             },
 
             /**
              * Draw seats arranged in a semicircle.
              */
             drawSemicircle: function(props) {
-                let group;
 
-                
-
-                return group;
             },
 
             /**
              * Draw seats in two opposing benches, linked by a half-circle.
              */
             drawHorseshoe: function(props) {
-                let group;
 
-                
-
-                return group;
             },
 
             /**
              * Draw seats arranged in a circle.
              */
             drawCircle: function(props) {
-                let group;
 
-                
-
-                return group;
             },
 
             /**
