@@ -27,6 +27,8 @@ window.onload = function() {
 
             // Display settings:
             seatShape: "square",
+            seatSpacing: 5,
+            seatSize: 20,
 
             // Load and save:
             dataEntry: "",
@@ -162,6 +164,8 @@ window.onload = function() {
 
                     // Drawing settings
                     seatShape: this.seatShape,
+                    seatSize: this.seatSize,
+                    seatSpacing: this.seatSpacing
                 };
 
                 let json = JSON.stringify(obj);
@@ -221,6 +225,8 @@ window.onload = function() {
                 
                 // Drawing settings
                 this.seatShape = obj.seatShape;
+                this.seatSize = obj.seatSize;
+                this.seatSpacing = obj.seatSpacing;
             },
 
             /**
@@ -455,9 +461,7 @@ window.onload = function() {
                 
                 // Determines the number of rows to columns 
                 // (1 row : RATIO columns)
-                const RATIO = 3.75;
-                const SEAT_SPACING = 5;
-                const SEAT_SIZE = 20; 
+                const RATIO = 3.75; 
 
                 // Get the total number of seats and the seat-color mapping 
                 // for each parliamentary group / side of the chamber.
@@ -497,7 +501,7 @@ window.onload = function() {
                 }
 
                 // Draw a bench.
-                let drawSeat = this.drawSeat;
+                let that = this;
                 function drawBench(
                     rows, cols, // Rows and cols of seats.
                     offsetX, offsetY, // Starting point for drawing.
@@ -512,20 +516,22 @@ window.onload = function() {
                             if (numberSeatsDrawn >= total) break;
 
                             let center = new Point(
-                                i * (SEAT_SIZE + SEAT_SPACING), 
-                                j * (SEAT_SIZE + SEAT_SPACING)
+                                i * (that.seatSize + that.seatSpacing), 
+                                j * (that.seatSize + that.seatSpacing)
                             );
                             center.x += offsetX;
                             center.y += offsetY;
 
+                            console.log(center);
+
                             currentColor = getNextColor(seatsByParty);
 
                             group.push(
-                                drawSeat(
+                                that.drawSeat(
                                     props.seatShape, 
                                     currentColor, 
                                     center, 
-                                    SEAT_SIZE
+                                    that.seatSize
                                 )
                             );
 
@@ -561,7 +567,7 @@ window.onload = function() {
                     rows = Math.ceil(Math.sqrt(left.total / RATIO));
                     cols = Math.ceil(left.total / rows);
 
-                    offsetX = WIDTH / 2 - ((cols / 2) * (SEAT_SIZE + SEAT_SPACING));
+                    offsetX = WIDTH / 2 - ((cols / 2) * (this.seatSize + this.seatSpacing));
                     offsetY = 40;
 
                     // Draw the left bench. Opposition MPs sit here.
@@ -574,15 +580,15 @@ window.onload = function() {
 
                     cols = Math.ceil(right.total / rows);
 
-                    offsetY = offsetY + (rows + 3) * (SEAT_SIZE + SEAT_SPACING);
+                    offsetY = offsetY + (rows + 3) * (this.seatSize + this.seatSpacing);
 
                     // Draw the right bench. Govt MPs sit here.
                     drawBench(rows, cols, offsetX, offsetY, right.total, right.seats, seats);
                 }
 
                 if (this.speaker.enabled) {
-                    offsetX -= 2 * (SEAT_SIZE + SEAT_SPACING);
-                    offsetY -= 2 * (SEAT_SIZE + SEAT_SPACING);
+                    offsetX -= 2 * (this.seatSize + this.seatSpacing);
+                    offsetY -= 2 * (this.seatSize + this.seatSpacing);
                     
                     let color;
                     if (this.speaker.partisan) {
@@ -595,7 +601,7 @@ window.onload = function() {
                     }
 
                     let centre = new Point(offsetX, offsetY);
-                    seats.push(drawSeat(props.seatShape, color, centre, SEAT_SIZE));
+                    seats.push(this.drawSeat(props.seatShape, color, centre, this.seatSize));
                 }
 
                 let group = new Group(seats);
