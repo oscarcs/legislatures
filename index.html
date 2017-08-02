@@ -112,9 +112,57 @@
                             <label class="checkbox label">
                                 <input class="checkbox" 
                                     type="checkbox" 
+                                    v-model="speaker.enabled"
+                                    v-on:change="() => speaker.party = parties[0]"
+                                >
+                                Enable Speaker
+                            </label>
+
+                        </div>
+                        </div>
+
+                        <div v-if="speaker.enabled && useParties" class="box" >
+                            
+                            <div class="field">
+                            <div class="control">
+                                
+                                <label class="checkbox label">
+                                    <input class="checkbox" 
+                                        type="checkbox" 
+                                        v-model="speaker.partisan"
+                                    >
+                                    Speaker is Partisan
+                                </label>
+
+                            </div>
+                            </div>
+
+                            <div v-if="speaker.partisan" class="field">
+                                <label class="label">Party</label>
+                            <div class="control">
+
+                                <div class="select">
+                                <select v-model="speaker.party">
+                                    <option v-for="party in parties" v-bind:value="party">
+                                        {{party.name}}
+                                    </option>
+                                </select>
+                                </div>
+
+                            </div>
+                            </div>
+
+                        </div>
+
+                        <div class="field">
+                        <div class="control">
+                            
+                            <label class="checkbox label">
+                                <input class="checkbox" 
+                                    type="checkbox" 
                                     v-model="useParties"
                                 >
-                                Legislature has parties
+                                Legislature Has Parties
                             </label>
 
                         </div>

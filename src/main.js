@@ -19,6 +19,11 @@ window.onload = function() {
             government: [],
             crossbench: [],
             opposition: [],
+            speaker: {
+                enabled: false,
+                partisan: true,
+                party: null,
+            },
 
             // Display settings:
             seatShape: "square",
@@ -79,15 +84,18 @@ window.onload = function() {
              * Set up the app.
              */
             initialize: function() {
+                WIDTH = document.getElementById('display').width;
+                HEIGHT = document.getElementById('display').height;
+                
                 // Load from localStorage.
                 let local = localStorage.getItem("data"); 
                 if (local !== null) {
                     this.load(local);
                     this.dataEntry = local;
-                }
 
-                WIDTH = document.getElementById('display').width;
-                HEIGHT = document.getElementById('display').height;
+                    // Generate using the previous settings.
+                    this.generate();
+                }
             },
 
             /**
@@ -150,6 +158,7 @@ window.onload = function() {
                     // Parties
                     useParties: this.useParties,
                     parties: parties,
+                    speaker: this.speaker,
 
                     // Drawing settings
                     seatShape: this.seatShape,
@@ -189,12 +198,26 @@ window.onload = function() {
                 this.crossbench = [];
                 this.opposition = [];
                 
-                for (let party of obj.parties) {
-                    this.parties.push(party);
-                    this[party.group].push(party);
+                // Set the speaker before the parties because we're about to 
+                // update the party reference.
+                this.speaker = obj.speaker;
 
+                for (let party of obj.parties) {
+                    party.collapsed = false;
+                    
+                    this.parties.push(party);
+                    
+                    // Set the speaker's party to refer to the correct object.
+                    if (party.name === obj.speaker.party.name) {
+                        this.speaker.party = party;
+                    }
+                    
+                    // Add the party to the right parliamentary group, and then
+                    // remove that property.
+                    this[party.group].push(party);
                     delete party.group;
                 }
+
                 
                 // Drawing settings
                 this.seatShape = obj.seatShape;
@@ -438,14 +461,23 @@ window.onload = function() {
 
                 // Get the total number of seats and the seat-color mapping 
                 // for each parliamentary group / side of the chamber.
-                function getSeatData(parties) {
+                function getSeatData(parties, speaker) {
                     let total = 0;
                     let seats = [];
 
                     for (let i = 0; i < parties.length; i++) {
                         total += parties[i].numberOfMembers;
+
+                        var num = parties[i].numberOfMembers;
+                        if (speaker.enabled && speaker.partisan && 
+                            speaker.party == parties[i]
+                        ) {
+                            num--;
+                            total--;
+                        }
+                        
                         seats.push({ 
-                            num: parties[i].numberOfMembers,
+                            num: num,
                             color: parties[i].color
                         });
                     }
@@ -455,10 +487,6 @@ window.onload = function() {
                 // Get the color of the next seat. We decrement the nunber of
                 // seats in each parliamentary group each time. 
                 function getNextColor(seatData) {
-                    if (seatData.length === 0) {
-                        return;
-                    }
-                    
                     let i = 0;
                     while (seatData[i].num === 0) {
                         i++;
@@ -517,7 +545,8 @@ window.onload = function() {
                     this.error.message = 
                         ["Both benches in a legislature with the 'opposing' ",
                         "typology must have at least one member."].join('');
-                }
+                    return;
+                }   
 
                 let rows, cols;
                 let offsetX, offsetY;
@@ -525,7 +554,7 @@ window.onload = function() {
                 
                 // Generate the left bench:
                 {
-                    let left = getSeatData(leftBenchParties);
+                    let left = getSeatData(leftBenchParties, this.speaker);
 
                     // Calculate the number of rows and columns of seats for the 
                     // opposing benches.
@@ -534,7 +563,6 @@ window.onload = function() {
 
                     offsetX = WIDTH / 2 - ((cols / 2) * (SEAT_SIZE + SEAT_SPACING));
                     offsetY = 40;
-                    console.log(offsetX, offsetY);
 
                     // Draw the left bench. Opposition MPs sit here.
                     drawBench(rows, cols, offsetX, offsetY, left.total, left.seats, seats);
@@ -542,7 +570,7 @@ window.onload = function() {
 
                 // Generate the right bench:
                 {
-                    let right = getSeatData(rightBenchParties);
+                    let right = getSeatData(rightBenchParties, this.speaker);
 
                     cols = Math.ceil(right.total / rows);
 
@@ -550,6 +578,24 @@ window.onload = function() {
 
                     // Draw the right bench. Govt MPs sit here.
                     drawBench(rows, cols, offsetX, offsetY, right.total, right.seats, seats);
+                }
+
+                if (this.speaker.enabled) {
+                    offsetX -= 2 * (SEAT_SIZE + SEAT_SPACING);
+                    offsetY -= 2 * (SEAT_SIZE + SEAT_SPACING);
+                    
+                    let color;
+                    if (this.speaker.partisan) {
+                        if (this.speaker.party !== null) {
+                            color = this.speaker.party.color;
+                        }
+                    }
+                    else {
+                        color = "#888888";
+                    }
+
+                    let centre = new Point(offsetX, offsetY);
+                    seats.push(drawSeat(props.seatShape, color, centre, SEAT_SIZE));
                 }
 
                 let group = new Group(seats);
