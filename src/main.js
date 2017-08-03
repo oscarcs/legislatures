@@ -611,7 +611,48 @@ window.onload = function() {
              * Draw seats arranged in a semicircle.
              */
             drawSemicircle: function(props) {
+                
+                // Draw debug circles:
+                let center = new Point(WIDTH / 2, HEIGHT / 2);
+                let radii = new Point(200, 200);
+                shape = new Path.Circle(center, radii);
+                shape.fillColor = "#DEDEDE";
 
+                radii = new Point(100, 100);
+                shape = new Path.Circle(center, radii);
+                shape.fillColor = "#FFFFFF";
+                
+                let count = 0;
+
+                this.seatSize = 20;
+                this.seatSpacing = 10;
+
+                for (let radius = 100; radius <= 200; radius += this.seatSize) {
+
+                    let circumference = Math.PI * radius;
+                    let iterations = Math.floor(circumference / (this.seatSize + this.seatSpacing));
+
+                    let angle = 180 / iterations;
+                    
+                    for (let i = 0; i <= iterations; i++) {
+
+                        let a = i * angle;
+
+                        let x = radius * -Math.cos((a * Math.PI) / 180);
+                        let y = radius * -Math.sin((a * Math.PI) / 180);
+                        
+                        //console.log(x, y);
+
+                        let c = new Point(center.x + x, center.y + y);
+                        let r = new Point(this.seatSize / 2, this.seatSize / 2)
+
+                        shape = new Path.Circle(c, r);
+                        shape.fillColor = "#FF00FF";
+                        count++;
+                    }
+                }
+
+                console.log(count);
             },
 
             /**
