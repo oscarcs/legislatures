@@ -612,6 +612,21 @@ window.onload = function() {
              */
             drawSemicircle: function(props) {
                 
+                this.seatSize = 20;
+                this.seatSpacing = 10;
+
+
+                props.numberOfSeats;
+
+                let maxRadius = 200;
+                let minRadius = 100;
+
+                let maxSeats = (Math.PI * maxRadius) / (this.seatSize + this.seatSpacing);
+                let minSeats = (Math.PI * minRadius) / (this.seatSize + this.seatSpacing);
+                maxSeats = Math.floor(maxSeats);
+                minSeats = Math.floor(minSeats);
+
+            
                 // Draw debug circles:
                 let center = new Point(WIDTH / 2, HEIGHT / 2);
                 let radii = new Point(200, 200);
@@ -624,25 +639,28 @@ window.onload = function() {
                 
                 let count = 0;
 
-                this.seatSize = 20;
-                this.seatSpacing = 10;
-
                 for (let radius = 100; radius <= 200; radius += this.seatSize) {
 
                     let circumference = Math.PI * radius;
                     let iterations = Math.floor(circumference / (this.seatSize + this.seatSpacing));
 
                     let angle = 180 / iterations;
-                    
+
                     for (let i = 0; i <= iterations; i++) {
 
                         let a = i * angle;
 
+                        /*
+                        if ((a > 45 && a < 50) || (a > 130 && a < 135)) {
+                            continue;
+                        }
+                        
+                        if (a > 87.5 && a < 92.5) continue;
+                        */
+
                         let x = radius * -Math.cos((a * Math.PI) / 180);
                         let y = radius * -Math.sin((a * Math.PI) / 180);
                         
-                        //console.log(x, y);
-
                         let c = new Point(center.x + x, center.y + y);
                         let r = new Point(this.seatSize / 2, this.seatSize / 2)
 
