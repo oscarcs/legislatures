@@ -615,9 +615,43 @@ window.onload = function() {
                 this.seatSize = 20;
                 this.seatSpacing = 10;
 
+                console.log("total seats", props.numberOfSeats);
 
-                props.numberOfSeats;
+                // These are the total number of seats and the corresponding
+                // number of rows required, where rows = index + 1.
+                // These values taken from David Richfield's parliament diagram
+                // generator.  
+                let rowTotals = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 
+                    469, 559, 657, 762, 876, 997, 1126];
 
+                let rows = 0;
+                for (; rows < rowTotals.length; rows++) {
+                    if (props.numberOfSeats < rowTotals[rows]) {
+                        break;
+                    }
+                }
+                console.log("rows", rows);
+
+                // Distribute the number of seats into the rows.
+                let tempTotal = 0;
+                let rowDist = [];
+                for (let i = rows - 1; i >= 0; i--) {
+                    rowDist.push(rowTotals[i]);
+                    tempTotal += rowTotals[i];
+                }
+
+                let tempTotal2 = 0;
+
+                for (let i = 0; i < rowDist.length; i++) {
+                    rowDist[i] = rowDist[i] / tempTotal;
+                    rowDist[i] *= Math.floor(props.numberOfSeats);
+                    tempTotal2 += rowDist[i];
+                }
+
+                console.log("temp seat total", tempTotal);
+                console.log("temp2", tempTotal2);
+            
+                /*
                 let maxRadius = 200;
                 let minRadius = 100;
 
@@ -625,7 +659,7 @@ window.onload = function() {
                 let minSeats = (Math.PI * minRadius) / (this.seatSize + this.seatSpacing);
                 maxSeats = Math.floor(maxSeats);
                 minSeats = Math.floor(minSeats);
-
+                */
             
                 // Draw debug circles:
                 let center = new Point(WIDTH / 2, HEIGHT / 2);
@@ -648,19 +682,14 @@ window.onload = function() {
 
                     for (let i = 0; i <= iterations; i++) {
 
+                        // Current angle:
                         let a = i * angle;
 
-                        /*
-                        if ((a > 45 && a < 50) || (a > 130 && a < 135)) {
-                            continue;
-                        }
-                        
-                        if (a > 87.5 && a < 92.5) continue;
-                        */
-
+                        // X and Y positions of each seat.
                         let x = radius * -Math.cos((a * Math.PI) / 180);
                         let y = radius * -Math.sin((a * Math.PI) / 180);
                         
+                        // Calculate the center and sizing vectors.
                         let c = new Point(center.x + x, center.y + y);
                         let r = new Point(this.seatSize / 2, this.seatSize / 2)
 
@@ -669,8 +698,6 @@ window.onload = function() {
                         count++;
                     }
                 }
-
-                console.log(count);
             },
 
             /**
