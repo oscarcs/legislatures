@@ -621,66 +621,50 @@ window.onload = function() {
                 // number of rows required, where rows = index + 1.
                 // These values taken from David Richfield's parliament diagram
                 // generator.  
-                let rowTotals = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 
+                let rowGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 
                     469, 559, 657, 762, 876, 997, 1126];
 
                 let rows = 0;
-                for (; rows < rowTotals.length; rows++) {
-                    if (props.numberOfSeats < rowTotals[rows]) {
+                for (; rows < rowGuides.length; rows++) {
+                    if (props.numberOfSeats < rowGuides[rows]) {
                         break;
                     }
                 }
                 console.log("rows", rows);
 
-                // Distribute the number of seats into the rows.
-                let tempTotal = 0;
+                //@@TODO: Calculate the radii of each row.
+
                 let rowDist = [];
-                for (let i = rows - 1; i >= 0; i--) {
-                    rowDist.push(rowTotals[i]);
-                    tempTotal += rowTotals[i];
+                for (let i = 0; i < rows; i++) {
+                    //@@TODO adjust this value based on the radius/circumference
+                    // of the row.
+                    rowDist.push(props.numberOfSeats / rows);
                 }
-
-                let tempTotal2 = 0;
-
-                for (let i = 0; i < rowDist.length; i++) {
-                    rowDist[i] = rowDist[i] / tempTotal;
-                    rowDist[i] *= Math.floor(props.numberOfSeats);
-                    tempTotal2 += rowDist[i];
-                }
-
-                console.log("temp seat total", tempTotal);
-                console.log("temp2", tempTotal2);
-            
-                /*
-                let maxRadius = 200;
-                let minRadius = 100;
-
-                let maxSeats = (Math.PI * maxRadius) / (this.seatSize + this.seatSpacing);
-                let minSeats = (Math.PI * minRadius) / (this.seatSize + this.seatSpacing);
-                maxSeats = Math.floor(maxSeats);
-                minSeats = Math.floor(minSeats);
-                */
-            
-                // Draw debug circles:
+ 
                 let center = new Point(WIDTH / 2, HEIGHT / 2);
-                let radii = new Point(200, 200);
-                shape = new Path.Circle(center, radii);
-                shape.fillColor = "#DEDEDE";
-
-                radii = new Point(100, 100);
-                shape = new Path.Circle(center, radii);
-                shape.fillColor = "#FFFFFF";
                 
-                let count = 0;
+                // Draw debug circles:
+                {
+                    let radii = new Point(200, 200);
+                    shape = new Path.Circle(center, radii);
+                    shape.fillColor = "#DEDEDE";
 
-                for (let radius = 100; radius <= 200; radius += this.seatSize) {
+                    radii = new Point(100, 100);
+                    shape = new Path.Circle(center, radii);
+                    shape.fillColor = "#FFFFFF";
+                }
 
+                // Draw a semicircular row of seats.
+                // radius: radius of row
+                // center: Point containing center
+                // totalSeats: number of seats to draw
+                // seats: seats array
+                let that = this;
+                function drawRow(radius, center, totalSeats, seats) {
                     let circumference = Math.PI * radius;
-                    let iterations = Math.floor(circumference / (this.seatSize + this.seatSpacing));
+                    let angle = 180 / totalSeats;
 
-                    let angle = 180 / iterations;
-
-                    for (let i = 0; i <= iterations; i++) {
+                    for (let i = 0; i <= totalSeats; i++) {
 
                         // Current angle:
                         let a = i * angle;
@@ -691,13 +675,22 @@ window.onload = function() {
                         
                         // Calculate the center and sizing vectors.
                         let c = new Point(center.x + x, center.y + y);
-                        let r = new Point(this.seatSize / 2, this.seatSize / 2)
-
+                        let r = new Point(that.seatSize / 2, that.seatSize / 2);
+                        
                         shape = new Path.Circle(c, r);
                         shape.fillColor = "#FF00FF";
-                        count++;
+                        seats.push(shape);
                     }
                 }
+
+                let seats = [];
+
+                for (let i = 0; i < rows; i++) {
+                    console.log(rowDist[i]);
+                    drawRow(100 + i * 40, center, rowDist[i], seats);
+                }
+
+                let group = new Group(seats);
             },
 
             /**
