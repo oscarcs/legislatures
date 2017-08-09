@@ -615,6 +615,8 @@ window.onload = function() {
                 this.seatSize = 20;
                 this.seatSpacing = 10;
 
+                props.numberOfSeats = 10;
+
                 console.log("total seats", props.numberOfSeats);
 
                 // These are the total number of seats and the corresponding
@@ -627,18 +629,31 @@ window.onload = function() {
                 let rows = 0;
                 for (; rows < rowGuides.length; rows++) {
                     if (props.numberOfSeats < rowGuides[rows]) {
+                        rows++;
                         break;
                     }
                 }
                 console.log("rows", rows);
 
                 //@@TODO: Calculate the radii of each row.
+                let rowRadii = [];
+                let inner = 1 * ((this.seatSize + this.seatSpacing) * rows);
+                for (let i = 0; i < rows; i++) {
+                    rowRadii.push(inner + i * (this.seatSize + this.seatSpacing)); 
+                }
+
+                // Get the total row radii:
+                let rowRadiiTotal = 0;
+                for (let i = 0; i < rowRadii.length; i++) {
+                    rowRadiiTotal += rowRadii[i];
+                }
 
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
                     //@@TODO adjust this value based on the radius/circumference
                     // of the row.
-                    rowDist.push(props.numberOfSeats / rows);
+                    console.log("rri", rowRadii[i], rowRadiiTotal);
+                    rowDist.push(Math.round((rowRadii[i] / rowRadiiTotal) * props.numberOfSeats));
                 }
  
                 let center = new Point(WIDTH / 2, HEIGHT / 2);
@@ -662,12 +677,16 @@ window.onload = function() {
                 let that = this;
                 function drawRow(radius, center, totalSeats, seats) {
                     let circumference = Math.PI * radius;
-                    let angle = 180 / totalSeats;
+                    
+                    let angle = 180 / (totalSeats - 1);
 
-                    for (let i = 0; i <= totalSeats; i++) {
+                    for (let i = 0; i < totalSeats; i++) {
 
                         // Current angle:
                         let a = i * angle;
+                        if (totalSeats == 1) {
+                            a = 90;
+                        }
 
                         // X and Y positions of each seat.
                         let x = radius * -Math.cos((a * Math.PI) / 180);
@@ -686,8 +705,8 @@ window.onload = function() {
                 let seats = [];
 
                 for (let i = 0; i < rows; i++) {
-                    console.log(rowDist[i]);
-                    drawRow(100 + i * 40, center, rowDist[i], seats);
+                    console.log("generating", rowDist[i], "seats");
+                    drawRow(rowRadii[i], center, rowDist[i], seats);
                 }
 
                 let group = new Group(seats);
