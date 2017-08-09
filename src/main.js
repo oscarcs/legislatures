@@ -207,13 +207,16 @@ window.onload = function() {
                 this.speaker = obj.speaker;
 
                 for (let party of obj.parties) {
+                    console.log(party, obj.parties);
                     party.collapsed = false;
                     
                     this.parties.push(party);
                     
                     // Set the speaker's party to refer to the correct object.
-                    if (party.name === obj.speaker.party.name) {
-                        this.speaker.party = party;
+                    if (obj.speaker.party !== null) {
+                        if (party.name === obj.speaker.party.name) {
+                            this.speaker.party = party;
+                        }
                     }
                     
                     // Add the party to the right parliamentary group, and then
@@ -615,8 +618,6 @@ window.onload = function() {
                 this.seatSize = 20;
                 this.seatSpacing = 10;
 
-                props.numberOfSeats = 10;
-
                 console.log("total seats", props.numberOfSeats);
 
                 // These are the total number of seats and the corresponding
@@ -656,19 +657,8 @@ window.onload = function() {
                     rowDist.push(Math.round((rowRadii[i] / rowRadiiTotal) * props.numberOfSeats));
                 }
  
-                let center = new Point(WIDTH / 2, HEIGHT / 2);
+                let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
                 
-                // Draw debug circles:
-                {
-                    let radii = new Point(200, 200);
-                    shape = new Path.Circle(center, radii);
-                    shape.fillColor = "#DEDEDE";
-
-                    radii = new Point(100, 100);
-                    shape = new Path.Circle(center, radii);
-                    shape.fillColor = "#FFFFFF";
-                }
-
                 // Draw a semicircular row of seats.
                 // radius: radius of row
                 // center: Point containing center
