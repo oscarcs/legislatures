@@ -627,8 +627,8 @@ window.onload = function() {
                 let rowGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 
                     469, 559, 657, 762, 876, 997, 1126];
 
-                let rows = 0;
-                for (; rows < rowGuides.length; rows++) {
+                let rows;
+                for (rows = 0; rows < rowGuides.length; rows++) {
                     if (props.numberOfSeats < rowGuides[rows]) {
                         rows++;
                         break;
@@ -636,36 +636,29 @@ window.onload = function() {
                 }
                 console.log("rows", rows);
 
-                //@@TODO: Calculate the radii of each row.
                 let rowRadii = [];
-                let inner = 1 * ((this.seatSize + this.seatSpacing) * rows);
+                let inner = (this.seatSize + this.seatSpacing) * rows;
                 for (let i = 0; i < rows; i++) {
                     rowRadii.push(inner + i * (this.seatSize + this.seatSpacing)); 
                 }
 
                 // Get the total row radii:
-                let rowRadiiTotal = 0;
-                for (let i = 0; i < rowRadii.length; i++) {
-                    rowRadiiTotal += rowRadii[i];
-                }
+                let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
 
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
-                    //@@TODO adjust this value based on the radius/circumference
-                    // of the row.
-                    console.log("rri", rowRadii[i], rowRadiiTotal);
                     rowDist.push(Math.round((rowRadii[i] / rowRadiiTotal) * props.numberOfSeats));
                 }
  
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
                 
-                // Draw a semicircular row of seats.
+                // Create a semicircular row of seats.
                 // radius: radius of row
                 // center: Point containing center
                 // totalSeats: number of seats to draw
                 // seats: seats array
                 let that = this;
-                function drawRow(radius, center, totalSeats, seats) {
+                function createRow(radius, center, totalSeats, seats) {
                     let circumference = Math.PI * radius;
                     
                     let angle = 180 / (totalSeats - 1);
@@ -679,27 +672,51 @@ window.onload = function() {
                         }
 
                         // X and Y positions of each seat.
-                        let x = radius * -Math.cos((a * Math.PI) / 180);
-                        let y = radius * -Math.sin((a * Math.PI) / 180);
+                        let x = center.x + radius * -Math.cos((a * Math.PI) / 180);
+                        let y = center.y + radius * -Math.sin((a * Math.PI) / 180);
                         
-                        // Calculate the center and sizing vectors.
-                        let c = new Point(center.x + x, center.y + y);
-                        let r = new Point(that.seatSize / 2, that.seatSize / 2);
-                        
-                        shape = new Path.Circle(c, r);
-                        shape.fillColor = "#FF00FF";
-                        seats.push(shape);
+                        seats.push({
+                            x: x,
+                            y: y,
+                            angle: a
+                        });
                     }
                 }
 
                 let seats = [];
 
+                // Generate the seat objects.
                 for (let i = 0; i < rows; i++) {
                     console.log("generating", rowDist[i], "seats");
-                    drawRow(rowRadii[i], center, rowDist[i], seats);
+                    createRow(rowRadii[i], center, rowDist[i], seats);
                 }
 
-                let group = new Group(seats);
+                // Sort the seats by angle:
+                //@@TODO: bias sorting by row.
+                seats.sort((a, b) => b.angle - a.angle);
+
+                // Draw the seats:
+                let seatShapes = [];
+                let num = 0;
+                for (let seat of seats) {
+                    // Calculate the center and sizing vectors.
+                    let c = new Point(seat.x, seat.y);
+                    let r = new Point(this.seatSize / 2, this.seatSize / 2);
+                    
+                    let shape = new Path.Circle(c, r);
+                    // Set the color of the seats conditionally:
+                    if (num < 65) {
+                        shape.fillColor = "#FF00FF";
+                    }
+                    else {
+                        shape.fillColor = "#FFFF00";
+                    }
+                    seatShapes.push(shape);
+                    
+                    num++;
+                }
+
+                let group = new Group(seatShapes);
             },
 
             /**
