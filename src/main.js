@@ -615,11 +615,6 @@ window.onload = function() {
              */
             drawSemicircle: function(props) {
                 
-                this.seatSize = 20;
-                this.seatSpacing = 10;
-
-                console.log("total seats", props.numberOfSeats);
-
                 // These are the total number of seats and the corresponding
                 // number of rows required, where rows = index + 1.
                 // These values taken from David Richfield's parliament diagram
@@ -634,8 +629,8 @@ window.onload = function() {
                         break;
                     }
                 }
-                console.log("rows", rows);
 
+                // Calculate radii of each row.
                 let rowRadii = [];
                 let inner = (this.seatSize + this.seatSpacing) * rows;
                 for (let i = 0; i < rows; i++) {
@@ -645,6 +640,7 @@ window.onload = function() {
                 // Get the total row radii:
                 let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
 
+                // Distribute seats to each row:
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
                     rowDist.push(Math.round((rowRadii[i] / rowRadiiTotal) * props.numberOfSeats));
@@ -691,7 +687,8 @@ window.onload = function() {
                     createRow(rowRadii[i], center, rowDist[i], seats);
                 }
 
-                // Sort the seats by angle:
+                // Sort the seats by angle, so that we can color each seat
+                // correctly.
                 //@@TODO: bias sorting by row.
                 seats.sort((a, b) => b.angle - a.angle);
 
@@ -704,13 +701,15 @@ window.onload = function() {
                     let r = new Point(this.seatSize / 2, this.seatSize / 2);
                     
                     let shape = new Path.Circle(c, r);
+                    
                     // Set the color of the seats conditionally:
-                    if (num < 65) {
+                    if (num < 60) {
                         shape.fillColor = "#FF00FF";
                     }
                     else {
                         shape.fillColor = "#FFFF00";
                     }
+                    
                     seatShapes.push(shape);
                     
                     num++;
