@@ -29,6 +29,7 @@ window.onload = function() {
             seatShape: "square",
             seatSpacing: 5,
             seatSize: 20,
+            enforceConsistentSpacing: false,
 
             // Load and save:
             dataEntry: "",
@@ -614,7 +615,7 @@ window.onload = function() {
              * Draw seats arranged in a semicircle.
              */
             drawSemicircle: function(props) {
-                
+
                 // These are the total number of seats and the corresponding
                 // number of rows required, where rows = index + 1.
                 // These values taken from David Richfield's parliament diagram
@@ -625,16 +626,50 @@ window.onload = function() {
                 let rows;
                 for (rows = 0; rows < rowGuides.length; rows++) {
                     if (props.numberOfSeats < rowGuides[rows]) {
-                        rows++;
                         break;
                     }
                 }
+                
+                // Ensure we have at least 1 row.
+                rows = Math.max(1, rows);
 
-                // Calculate radii of each row.
+                // The following is the derivation of the 'base' 
+                // (the radius of the inner row)
+                // (here, 'seatsize' = seatSize + seatSpacing)
+                
+                // each row has a radii bigger by seatsize
+                // ith row has a radii of base + seatsize * rows
+                // e.g.:
+
+                // seatsize = 25
+                // base = 100
+                // 100     125     150     175     200     225     250     ...
+                // total_r = (100 * rows) + (0 * 25) + (1 * 25) + ... + ((rows-1) * 25)                 
+                //         = rows * (base + (base + rows * seatsize)) / 2 
+
+                // Since the above is a arithmetic sequence, we apply the 
+                // formula for the sum:
+
+                // (2 * total_r) / rows = base + (base + rows * seatSize)
+                // ...
+                // base = 0.5 * ((2 * total_r) / rows - rows * seatSize)
+
+                // The total length of circumference we will need for all the
+                // seats.
+                let total_c = props.numberOfSeats 
+                    * (this.seatSize + this.seatSpacing);
+                
+                // The total radius, based on the above:
+                let total_r = total_c / Math.PI;
+
+                // Calculate the base:
+                let base = 0.5 * (((2 * total_r) / rows) 
+                    - rows * (this.seatSize + this.seatSpacing));
+
+                // Calculate radii of each row:
                 let rowRadii = [];
-                let inner = (this.seatSize + this.seatSpacing) * rows;
                 for (let i = 0; i < rows; i++) {
-                    rowRadii.push(inner + i * (this.seatSize + this.seatSpacing)); 
+                    rowRadii.push(base + i * (this.seatSize + this.seatSpacing)); 
                 }
 
                 // Get the total row radii:
@@ -643,7 +678,9 @@ window.onload = function() {
                 // Distribute seats to each row:
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
-                    rowDist.push(Math.round((rowRadii[i] / rowRadiiTotal) * props.numberOfSeats));
+                    rowDist.push(Math.round(
+                        (rowRadii[i] / rowRadiiTotal) * props.numberOfSeats
+                    ));
                 }
  
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
@@ -655,14 +692,31 @@ window.onload = function() {
                 // seats: seats array
                 let that = this;
                 function createRow(radius, center, totalSeats, seats) {
-                    let circumference = Math.PI * radius;
                     
-                    let angle = 180 / (totalSeats - 1);
+                    let circumference = Math.PI * radius;
+                    let angle = 0;
+                    let totalAngle = 0; 
+                    let startAngle = 0; 
+
+                    // This option ensures that each row has identical spacing 
+                    // between seats.
+                    // This will produce 'rough edges', which may be a desired 
+                    // effect.
+                    if (that.enforceConsistentSpacing) {
+                        angle = 180 * (that.seatSize + that.seatSpacing) / circumference;
+                        totalAngle = (totalSeats - 1) * angle;
+                        startAngle = (180 - totalAngle) / 2;
+                    }
+                    // Otherwise, Use seat spacings that are roughly similar, 
+                    // but not identical. 
+                    else {
+                        angle = 180 / (totalSeats - 1);
+                    }
 
                     for (let i = 0; i < totalSeats; i++) {
 
                         // Current angle:
-                        let a = i * angle;
+                        let a = i * angle + startAngle;
                         if (totalSeats == 1) {
                             a = 90;
                         }
@@ -691,6 +745,9 @@ window.onload = function() {
                 // correctly.
                 //@@TODO: bias sorting by row.
                 seats.sort((a, b) => b.angle - a.angle);
+                
+                console.log("number of seats", props.numberOfSeats);
+                console.log("actual number of seats", seats.length);
 
                 // Draw the seats:
                 let seatShapes = [];
@@ -703,7 +760,7 @@ window.onload = function() {
                     let shape = new Path.Circle(c, r);
                     
                     // Set the color of the seats conditionally:
-                    if (num < 60) {
+                    if (num < 0.5 * props.numberOfSeats) {
                         shape.fillColor = "#FF00FF";
                     }
                     else {
