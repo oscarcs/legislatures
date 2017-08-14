@@ -166,7 +166,8 @@ window.onload = function() {
                     // Drawing settings
                     seatShape: this.seatShape,
                     seatSize: this.seatSize,
-                    seatSpacing: this.seatSpacing
+                    seatSpacing: this.seatSpacing,
+                    enforceConsistentSpacing: this.enforceConsistentSpacing,                    
                 };
 
                 let json = JSON.stringify(obj);
@@ -225,12 +226,12 @@ window.onload = function() {
                     this[party.group].push(party);
                     delete party.group;
                 }
-
                 
                 // Drawing settings
                 this.seatShape = obj.seatShape;
                 this.seatSize = obj.seatSize;
                 this.seatSpacing = obj.seatSpacing;
+                this.enforceConsistentSpacing = obj.enforceConsistentSpacing;  
             },
 
             /**
