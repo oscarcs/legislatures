@@ -7,13 +7,28 @@ window.onload = function() {
              * Data:
              */
 
+            //
             // General settings:
+            //
+
             jurisdictionName: "",
             legislatureName: "",
+            // The arrangment of seating in the legislature, based on
+            // the typologies in XML's architecure book 'Parliament'.
+            // Possible values:
+            // "opposing": Opposing benches, e.g. United Kingdom.
+            // "semicircle": Semicircular, e.g. European Union.
+            // "horseshoe": e.g. New Zealand.
+            // "circle": e.g. Jordan, Slovenia.
+            // "classroom": Consecutive rows, e.g. China.
             typology: "opposing",
+            // Number of members / seats in the legislature.
             numberOfSeats: 0,
 
+            //
             // Parties and groups:
+            //
+
             useParties: true,
             parties: [],
             government: [],
@@ -25,7 +40,13 @@ window.onload = function() {
                 party: null,
             },
 
+            //
             // Display settings:
+            //
+
+            // Seat shape. XML's book uses squares, while Wikipedia uses
+            // circles.
+            // Possible values: "circle", "square"
             seatShape: "square",
             seatSpacing: 5,
             seatSize: 20,
@@ -255,48 +276,9 @@ window.onload = function() {
                 // Save the settings to localStorage.
                 this.save();
 
-                let props = this.generateProps();
-                let group = this.drawLegislature(props);
+                let group = this.drawLegislature();
 
                 console.log('Generating...');
-            },
-
-            /**
-             * Generate a props object based on the current state of the 
-             * bindings on the Vue-linked form.
-             */
-            generateProps: function() {
-                return {
-                    /**
-                     * The arrangment of seating in the legislature, based on
-                     * the typologies in XML's architecure book 'Parliament'.
-                     * Possible values:
-                     * "opposing": Opposing benches, e.g. United Kingdom.
-                     * "semicircle": Semicircular, e.g. European Union.
-                     * "horseshoe": e.g. New Zealand.
-                     * "circle": e.g. Jordan, Slovenia.
-                     * "classroom": Consecutive rows, e.g. China.
-                     */ 
-                    typology: this.typology,
-
-                    /**
-                     * Number of members / seats in the legislature.
-                     */
-                    numberOfSeats: this.numberOfSeats,
-
-                    /**
-                     * Seat shape. XML's book uses squares, while Wikipedia uses
-                     * circles.
-                     * Possible values: "circle", "square"
-                     */
-                    seatShape: this.seatShape,
-
-                    /**
-                     * Array of objects describing the parties in the 
-                     * legislature. 
-                     */
-                    parties: this.parties
-                };
             },
 
             /**
@@ -427,17 +409,17 @@ window.onload = function() {
             },
 
             /**
-             * Draw the legislature based on a props object.
+             * Draw the legislature.
              */
-            drawLegislature: function(props) {
+            drawLegislature: function() {
 
-                switch (props.typology) {
+                switch (this.typology) {
                     case "opposing":
-                        this.drawOpposing(props);
+                        this.drawOpposing();
                         break;
 
                     case "semicircle":
-                        this.drawSemicircle(props);
+                        this.drawSemicircle();
                         break;
 
                     case "horseshoe":
@@ -450,7 +432,7 @@ window.onload = function() {
 
                     default:
                         this.error.title = 
-                            `Typology '${props.typology}' not recognized.`;
+                            `Typology '${this.typology}' not recognized.`;
                         this.error.message = [ 
                             "Typology must be one of 'Opposing', 'Semicircle', ",
                             "'Horseshoe', 'Circle', or 'Classroom'"
@@ -462,7 +444,7 @@ window.onload = function() {
             /**
              * Draw seats arranged as two opposing benches.
              */
-            drawOpposing: function(props) {
+            drawOpposing: function() {
                 
                 // Determines the number of rows to columns 
                 // (1 row : RATIO columns)
@@ -527,13 +509,11 @@ window.onload = function() {
                             center.x += offsetX;
                             center.y += offsetY;
 
-                            console.log(center);
-
                             currentColor = getNextColor(seatsByParty);
 
                             group.push(
                                 that.drawSeat(
-                                    props.seatShape, 
+                                    that.seatShape, 
                                     currentColor, 
                                     center, 
                                     that.seatSize
@@ -606,7 +586,7 @@ window.onload = function() {
                     }
 
                     let centre = new Point(offsetX, offsetY);
-                    seats.push(this.drawSeat(props.seatShape, color, centre, this.seatSize));
+                    seats.push(this.drawSeat(this.seatShape, color, centre, this.seatSize));
                 }
 
                 let group = new Group(seats);
@@ -615,7 +595,7 @@ window.onload = function() {
             /**
              * Draw seats arranged in a semicircle.
              */
-            drawSemicircle: function(props) {
+            drawSemicircle: function() {
 
                 // These are the total number of seats and the corresponding
                 // number of rows required, where rows = index + 1.
@@ -626,7 +606,7 @@ window.onload = function() {
 
                 let rows;
                 for (rows = 0; rows < rowGuides.length; rows++) {
-                    if (props.numberOfSeats < rowGuides[rows]) {
+                    if (this.numberOfSeats < rowGuides[rows]) {
                         break;
                     }
                 }
@@ -638,10 +618,7 @@ window.onload = function() {
                 // (the radius of the inner row)
                 // (here, 'seatsize' = seatSize + seatSpacing)
                 
-                // each row has a radii bigger by seatsize
-                // ith row has a radii of base + seatsize * rows
-                // e.g.:
-
+                // Each row has a radii of (base + seatsize * rows), e.g.:
                 // seatsize = 25
                 // base = 100
                 // 100     125     150     175     200     225     250     ...
@@ -657,10 +634,10 @@ window.onload = function() {
 
                 // The total length of circumference we will need for all the
                 // seats.
-                let total_c = props.numberOfSeats 
+                let total_c = this.numberOfSeats 
                     * (this.seatSize + this.seatSpacing);
                 
-                // The total radius, based on the above:
+                // The total radius, based on the total circumference:
                 let total_r = total_c / Math.PI;
 
                 // Calculate the base:
@@ -680,7 +657,7 @@ window.onload = function() {
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
                     rowDist.push(Math.round(
-                        (rowRadii[i] / rowRadiiTotal) * props.numberOfSeats
+                        (rowRadii[i] / rowRadiiTotal) * this.numberOfSeats
                     ));
                 }
  
@@ -747,7 +724,7 @@ window.onload = function() {
                 //@@TODO: bias sorting by row.
                 seats.sort((a, b) => b.angle - a.angle);
                 
-                console.log("number of seats", props.numberOfSeats);
+                console.log("number of seats", this.numberOfSeats);
                 console.log("actual number of seats", seats.length);
 
                 // Draw the seats:
@@ -761,7 +738,7 @@ window.onload = function() {
                     let shape = new Path.Circle(c, r);
                     
                     // Set the color of the seats conditionally:
-                    if (num < 0.5 * props.numberOfSeats) {
+                    if (num < 0.5 * this.numberOfSeats) {
                         shape.fillColor = "#FF00FF";
                     }
                     else {
@@ -779,14 +756,14 @@ window.onload = function() {
             /**
              * Draw seats in two opposing benches, linked by a half-circle.
              */
-            drawHorseshoe: function(props) {
+            drawHorseshoe: function() {
 
             },
 
             /**
              * Draw seats arranged in a circle.
              */
-            drawCircle: function(props) {
+            drawCircle: function() {
 
             },
 
