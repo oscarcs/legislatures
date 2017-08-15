@@ -230,7 +230,7 @@ window.onload = function() {
                 this.speaker = obj.speaker;
 
                 for (let party of obj.parties) {
-                    console.log(party, obj.parties);
+
                     party.collapsed = false;
                     
                     this.parties.push(party);
@@ -653,6 +653,8 @@ window.onload = function() {
                 // Get the total row radii:
                 let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
 
+                console.log(total_r, rowRadiiTotal);
+
                 // Distribute seats to each row:
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
@@ -669,8 +671,10 @@ window.onload = function() {
                 // totalSeats: number of seats to draw
                 // seats: seats array
                 let that = this;
-                function createRow(radius, center, totalSeats, seats) {
+                function createRow(radius, center, totalSeats) {
                     
+                    let seats = [];
+
                     let circumference = Math.PI * radius;
                     let angle = 0;
                     let totalAngle = 0; 
@@ -699,24 +703,21 @@ window.onload = function() {
                             a = 90;
                         }
 
-                        // X and Y positions of each seat.
+                        // calculate the X and Y positions of each seat
                         let x = center.x + radius * -Math.cos((a * Math.PI) / 180);
                         let y = center.y + radius * -Math.sin((a * Math.PI) / 180);
-                        
-                        seats.push({
-                            x: x,
-                            y: y,
-                            angle: a
-                        });
+
+                        seats.push({ x: x, y: y, angle: a });
                     }
+
+                    return seats;
                 }
 
                 let seats = [];
 
                 // Generate the seat objects.
                 for (let i = 0; i < rows; i++) {
-                    console.log("generating", rowDist[i], "seats");
-                    createRow(rowRadii[i], center, rowDist[i], seats);
+                    seats = seats.concat(createRow(rowRadii[i], center, rowDist[i]));
                 }
 
                 // Sort the seats by angle, so that we can color each seat
@@ -732,10 +733,26 @@ window.onload = function() {
                 let num = 0;
                 for (let seat of seats) {
                     // Calculate the center and sizing vectors.
-                    let c = new Point(seat.x, seat.y);
-                    let r = new Point(this.seatSize / 2, this.seatSize / 2);
-                    
-                    let shape = new Path.Circle(c, r);
+                    let shape;
+
+                    if (this.seatShape === "circle") {
+                        let c = new Point(seat.x, seat.y);
+                        let r = new Point(this.seatSize / 2, this.seatSize / 2);
+                        shape = new Path.Circle(c, r);                        
+                    }
+                    else if (this.seatShape === "square") {
+                        let p1 = new Point(
+                            seat.x - this.seatSize/2, 
+                            seat.y - this.seatSize/2);
+                        let p2 = new Point(
+                            seat.x + this.seatSize/2, 
+                            seat.y + this.seatSize/2
+                        );
+                        shape = new Path.Rectangle(p1, p2);
+                        
+                        let c = new Point
+                        shape.rotate(seat.angle, new Point(seat.x, seat.y));
+                    }
                     
                     // Set the color of the seats conditionally:
                     if (num < 0.5 * this.numberOfSeats) {
