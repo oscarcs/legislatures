@@ -31,9 +31,12 @@ window.onload = function() {
 
             useParties: true,
             parties: [],
+            // These three groups are used for the 'opposing' typology.
             government: [],
             crossbench: [],
             opposition: [],
+            // This group is used for the 'semicircular' typology.
+            partyOrdering: [],
             speaker: {
                 enabled: false,
                 partisan: true,
@@ -163,11 +166,15 @@ window.onload = function() {
                         group = "crossbench";
                     }
 
+                    // Find the index of the party in the 
+
                     parties.push({
                         name: party.name,     
                         numberOfMembers: party.numberOfMembers,       
                         color: party.color,
-                        group: group        
+                        
+                        group: group,
+                        ordering: this.partyOrdering.indexOf(party)
                     });
                 }
                 
@@ -245,6 +252,16 @@ window.onload = function() {
                     // property.
                     this[party.group].push(party);
                     delete party.group;
+
+                    // Add the party to the right index in the partyOrdering, and then remove that
+                    // property.
+                    if (party.ordering > -1) {
+                        this.partyOrdering[party.ordering] = party;
+                    }
+                    else {
+                        this.partyOrdering.push(party);
+                    }
+                    delete party.ordering;
                 }
                 
                 // Drawing settings
@@ -269,6 +286,13 @@ window.onload = function() {
              * Generate the legislature diagram.
              */
             generate: function() {
+
+                // Make the seatTotal equal to the total of seats for each party.
+                this.numberOfSeats = 0;
+                for (party of this.parties) {
+                    this.numberOfSeats += party.numberOfMembers;
+                }
+
                 // Clear the drawn data:
                 this.clear();
 
@@ -308,7 +332,10 @@ window.onload = function() {
                 }
 
                 this.parties.push(party);
+                
+                // Add the party to the right ordering groups.
                 this.government.push(party);
+                this.partyOrdering.push(party);
             },
 
             /**
@@ -405,6 +432,7 @@ window.onload = function() {
                 this.government = this.government.filter(x => x !== party);
                 this.crossbench = this.crossbench.filter(x => x !== party);
                 this.opposition = this.opposition.filter(x => x !== party);
+                this.partyOrdering = this.partyOrdering.filter(x => x !== party);
             },
 
             /**
@@ -444,6 +472,24 @@ window.onload = function() {
 
                 seatAllocations[i].num--;
                 return seatAllocations[i].color;
+            },
+
+            /**
+             * Draw the speaker.
+             */
+            drawSpeaker: function(x, y) {
+                let color;
+                if (this.speaker.partisan) {
+                    if (this.speaker.party !== null) {
+                        color = this.speaker.party.color;
+                    }
+                }
+                else {
+                    color = "#888888";
+                }
+
+                let centre = new Point(x, y);
+                return this.drawSeat(this.seatShape, color, centre, this.seatSize);
             },
 
             /**
@@ -503,11 +549,11 @@ window.onload = function() {
                             let center = new Point(
                                 i * (that.seatSize + that.seatSpacing), 
                                 j * (that.seatSize + that.seatSpacing)
-                            );
+                            );  
                             center.x += offsetX;
                             center.y += offsetY;
 
-                            currentColor = getNextSeatAllocation(seatsByParty);
+                            currentColor = that.getNextSeatAllocation(seatsByParty);
 
                             group.push(
                                 that.drawSeat(that.seatShape, currentColor, center, that.seatSize)
@@ -549,7 +595,7 @@ window.onload = function() {
                     offsetY = 40;
 
                     // Draw the left bench. Opposition MPs sit here.
-                    seats = seats.append(
+                    seats = seats.concat(
                         drawBench(rows, cols, offsetX, offsetY, left.total, left.seats)
                     );
                 }
@@ -562,7 +608,7 @@ window.onload = function() {
                     offsetY = offsetY + (rows + 3) * (this.seatSize + this.seatSpacing);
 
                     // Draw the right bench. Govt MPs sit here.
-                    seats = seats.append(
+                    seats = seats.concat(
                         drawBench(rows, cols, offsetX, offsetY, right.total, right.seats)
                     );
                 }
@@ -570,19 +616,7 @@ window.onload = function() {
                 if (this.speaker.enabled) {
                     offsetX -= 2 * (this.seatSize + this.seatSpacing);
                     offsetY -= 2 * (this.seatSize + this.seatSpacing);
-                    
-                    let color;
-                    if (this.speaker.partisan) {
-                        if (this.speaker.party !== null) {
-                            color = this.speaker.party.color;
-                        }
-                    }
-                    else {
-                        color = "#888888";
-                    }
-
-                    let centre = new Point(offsetX, offsetY);
-                    seats.push(this.drawSeat(this.seatShape, color, centre, this.seatSize));
+                    this.drawSpeaker(offsetX, offsetY);
                 }
 
                 let group = new Group(seats);
@@ -593,6 +627,8 @@ window.onload = function() {
              */
             drawSemicircle: function() {
 
+                let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                 
+
                 // These are the total number of seats and the corresponding number of rows 
                 // required, where rows = index + 1.
                 // These values taken from David Richfield's parliament diagram generator.  
@@ -601,37 +637,22 @@ window.onload = function() {
 
                 let rows;
                 for (rows = 0; rows < rowGuides.length; rows++) {
-                    if (this.numberOfSeats < rowGuides[rows]) {
+                    if (seatData.total < rowGuides[rows]) {
                         break;
                     }
                 }
-                
                 // Ensure we have at least 1 row.
                 rows = Math.max(1, rows);
 
+
                 // The total length of circumference we will need for all the seats.
-                let total_c = this.numberOfSeats * (this.seatSize + this.seatSpacing);
+                let total_c = seatData.total * (this.seatSize + this.seatSpacing);
                 
                 // The total radius, based on the total circumference:
                 let total_r = total_c / Math.PI;
 
-                // The following is the derivation of the 'base' (the radius of the inner row)
-                // (here, 'seatsize' = seatSize + seatSpacing)
-                
-                // Each row has a radii of (base + seatsize * rows), e.g.:
-                // seatsize = 25
-                // base = 100
-                // 100     125     150     175     200     225     250     ...
-                // total_r = (100 * rows) + (0 * 25) + (1 * 25) + ... + ((rows-1) * 25)                 
-                //         = rows * (base + (base + rows * seatsize)) / 2 
-
-                // Since the above is a arithmetic sequence, we apply the formula for the sum:
-
-                // (2 * total_r) / rows = base + (base + rows * seatSize)
-                // ...
-                // base = 0.5 * ((2 * total_r) / rows - rows * seatSize)
-
                 // Calculate the base:
+                // (Derivation for this is based on an arithmetic series.)
                 let base = 0.5 * (((2 * total_r) / rows) - rows * (this.seatSize + this.seatSpacing));
 
                 // Calculate radii of each row:
@@ -642,15 +663,20 @@ window.onload = function() {
 
                 // Get the total row radii:
                 let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
-
+                
                 // Distribute seats to each row:
                 let rowDist = [];
+                let rowTotal = 0;
                 for (let i = 0; i < rows; i++) {
                     rowDist.push(
-                        Math.round((rowRadii[i] / rowRadiiTotal) * this.numberOfSeats)
+                        Math.round((rowRadii[i] / rowRadiiTotal) * seatData.total)
                     );
+                    rowTotal += rowDist[i];
                 }
  
+                // Adjust outer row to ensure the correct number of seats are drawn.
+                rowDist[rowDist.length-1] += seatData.total - rowTotal;
+
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
                 
                 // Create a semicircular row of seats.
@@ -701,58 +727,36 @@ window.onload = function() {
                     return seats;
                 }
 
-                let seats = [];
-
                 // Generate the seat objects.
+                let seats = [];
                 for (let i = 0; i < rows; i++) {
                     seats = seats.concat(createRow(rowRadii[i], center, rowDist[i]));
                 }
 
                 // Sort the seats by angle, so that we can color each seat correctly.
-                //@@TODO: bias sorting by row.
-                seats.sort((a, b) => b.angle - a.angle);
+                //@@TODO: bias sorting by row?
+                seats.sort((a, b) => a.angle - b.angle);
                 
                 console.log("number of seats", this.numberOfSeats);
                 console.log("actual number of seats", seats.length);
 
-                // Draw the seats:
+                // Draw each seat:
                 let seatShapes = [];
-                let num = 0;
                 for (let seat of seats) {
-                    // Calculate the center and sizing vectors.
                     let shape;
+                    let position = new Point(seat.x, seat.y)
 
-                    if (this.seatShape === "circle") {
-                        let c = new Point(seat.x, seat.y);
-                        let r = new Point(this.seatSize / 2, this.seatSize / 2);
-                        shape = new Path.Circle(c, r);                        
-                    }
-                    else if (this.seatShape === "square") {
-                        let p1 = new Point(
-                            seat.x - this.seatSize / 2, 
-                            seat.y - this.seatSize / 2
-                        );
-                        let p2 = new Point(
-                            seat.x + this.seatSize / 2, 
-                            seat.y + this.seatSize / 2
-                        );
-                        shape = new Path.Rectangle(p1, p2);
-                        
-                        let c = new Point
-                        shape.rotate(seat.angle, new Point(seat.x, seat.y));
-                    }
-                    
-                    // Set the color of the seats conditionally:
-                    if (num < 0.50 * this.numberOfSeats) {
-                        shape.fillColor = "#FF00FF";
-                    }
-                    else {
-                        shape.fillColor = "#FFFF00";
-                    }
-                    
+                    let color = this.getNextSeatAllocation(seatData.seats);
+
+                    shape = this.drawSeat(this.seatShape, color, position, this.seatSize);
+                    shape.rotate(seat.angle, position);
                     seatShapes.push(shape);
-                    
-                    num++;
+                }
+
+                if (this.speaker.enabled) {
+                    let x = center.x
+                    let y = center.y + this.seatSize + this.seatSpacing;
+                    this.drawSpeaker(x, y);
                 }
 
                 let group = new Group(seatShapes);

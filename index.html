@@ -256,11 +256,11 @@
                             </draggable>
                         </div> <!-- left column -->
 
-                        <div class="column" v-if="parties.length > 0">
+                        <div class="column" v-if="parties.length > 0 && typology === 'opposing'">
                             
                             <nav class="panel">
                                 <p class="panel-heading">Government Bench</p>
-                                
+
                                 <draggable 
                                     v-model="government" 
                                     class="panel-drag" 
@@ -303,6 +303,29 @@
                                 </div>
                                 </draggable>
                             </nav>
+
+                        </div> <!-- right column -->
+
+                        <div class="column" v-if="parties.length > 0 && typology === 'semicircle'">
+                            
+                            <nav class="panel">
+                                <p class="panel-heading">Party Ordering</p>
+                                <div class="panel-block"><i>(Left)</i></div>
+
+                                <draggable 
+                                    v-model="partyOrdering" 
+                                    class="panel-drag" 
+                                    :options="{ group: 'parties' }"
+                                >
+                                <div v-for="party in partyOrdering" class="panel-block">
+                                    <span class="panel-icon">☰</span>
+                                    {{party.name}}
+                                </div>
+                                </draggable>
+
+                                <div class="panel-block"><i>(Right)</i></div>
+                            </nav>
+
 
                         </div> <!-- right column -->
 
