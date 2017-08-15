@@ -3,9 +3,9 @@ window.onload = function() {
         el: '#vue',
         data: {
 
-            /**
-             * Data:
-             */
+        /**
+         * Data:
+         */
 
             //
             // General settings:
@@ -52,12 +52,15 @@ window.onload = function() {
             seatSize: 20,
             enforceConsistentSpacing: false,
 
+            //
             // Load and save:
+            //
+
             dataEntry: "",
 
-            /**
-             * Display properties:
-             */
+        /**
+         * Display properties:
+         */
 
             WIDTH: 0,
             HEIGHT: 0,
@@ -138,11 +141,7 @@ window.onload = function() {
             },
 
             onSortable: function(event) {
-                this.list.splice(
-                    event.newIndex, 
-                    0, 
-                    this.list.splice(event.oldIndex, 1)[0]
-                );
+                this.list.splice(event.newIndex, 0, this.list.splice(event.oldIndex, 1)[0]);
             },
 
             /**
@@ -225,8 +224,8 @@ window.onload = function() {
                 this.crossbench = [];
                 this.opposition = [];
                 
-                // Set the speaker before the parties because we're about to 
-                // update the party reference.
+                // Set the speaker before the parties because we're about to update the party 
+                // reference.
                 this.speaker = obj.speaker;
 
                 for (let party of obj.parties) {
@@ -242,8 +241,8 @@ window.onload = function() {
                         }
                     }
                     
-                    // Add the party to the right parliamentary group, and then
-                    // remove that property.
+                    // Add the party to the right parliamentary group, and then remove that 
+                    // property.
                     this[party.group].push(party);
                     delete party.group;
                 }
@@ -409,6 +408,45 @@ window.onload = function() {
             },
 
             /**
+             * Get the total number of seats and the seat-color mapping for each parliamentary 
+             * group / side of the chamber.
+             */
+            getSeatAllocations: function(parties, speaker) {
+                let total = 0;
+                let seats = [];
+
+                for (let i = 0; i < parties.length; i++) {
+                    total += parties[i].numberOfMembers;
+
+                    var num = parties[i].numberOfMembers;
+                    if (speaker.enabled && speaker.partisan && speaker.party == parties[i]) {
+                        num--;
+                        total--;
+                    }
+                    
+                    seats.push({ 
+                        num: num,
+                        color: parties[i].color
+                    });
+                }
+                return { total: total, seats: seats };
+            },
+
+            /**
+             * Get the color of the next seat. We decrement the nunber of seats in each 
+             * parliamentary group each time. 
+             */
+            getNextSeatAllocation: function(seatAllocations) {
+                let i = 0;
+                while (seatAllocations[i].num === 0) {
+                    i++;
+                }
+
+                seatAllocations[i].num--;
+                return seatAllocations[i].color;
+            },
+
+            /**
              * Draw the legislature.
              */
             drawLegislature: function() {
@@ -434,8 +472,8 @@ window.onload = function() {
                         this.error.title = 
                             `Typology '${this.typology}' not recognized.`;
                         this.error.message = [ 
-                            "Typology must be one of 'Opposing', 'Semicircle', ",
-                            "'Horseshoe', 'Circle', or 'Classroom'"
+                            "Typology must be one of 'Opposing', 'Semicircle', 'Horseshoe', ",
+                            "'Circle', or 'Classroom'"
                         ].join('');
                         return;
                 }
@@ -446,54 +484,14 @@ window.onload = function() {
              */
             drawOpposing: function() {
                 
-                // Determines the number of rows to columns 
-                // (1 row : RATIO columns)
+                // Determines the number of rows to columns (1 row : RATIO columns)
                 const RATIO = 3.75; 
-
-                // Get the total number of seats and the seat-color mapping 
-                // for each parliamentary group / side of the chamber.
-                function getSeatData(parties, speaker) {
-                    let total = 0;
-                    let seats = [];
-
-                    for (let i = 0; i < parties.length; i++) {
-                        total += parties[i].numberOfMembers;
-
-                        var num = parties[i].numberOfMembers;
-                        if (speaker.enabled && speaker.partisan && 
-                            speaker.party == parties[i]
-                        ) {
-                            num--;
-                            total--;
-                        }
-                        
-                        seats.push({ 
-                            num: num,
-                            color: parties[i].color
-                        });
-                    }
-                    return { total: total, seats: seats };
-                }
-
-                // Get the color of the next seat. We decrement the nunber of
-                // seats in each parliamentary group each time. 
-                function getNextColor(seatData) {
-                    let i = 0;
-                    while (seatData[i].num === 0) {
-                        i++;
-                    }
-
-                    seatData[i].num--;
-                    return seatData[i].color;
-                }
 
                 // Draw a bench.
                 let that = this;
-                function drawBench(
-                    rows, cols, // Rows and cols of seats.
-                    offsetX, offsetY, // Starting point for drawing.
-                    total, seatsByParty, group // Bench variables.
-                ) {
+                function drawBench(rows, cols, offsetX, offsetY, total, seatsByParty) {
+
+                    let group = [];
                     let numberSeatsDrawn = 0;
                     let currentColor = "black";
 
@@ -509,33 +507,29 @@ window.onload = function() {
                             center.x += offsetX;
                             center.y += offsetY;
 
-                            currentColor = getNextColor(seatsByParty);
+                            currentColor = getNextSeatAllocation(seatsByParty);
 
                             group.push(
-                                that.drawSeat(
-                                    that.seatShape, 
-                                    currentColor, 
-                                    center, 
-                                    that.seatSize
-                                )
+                                that.drawSeat(that.seatShape, currentColor, center, that.seatSize)
                             );
 
                             numberSeatsDrawn++;
                         }
                     }
+
+                    return group;
                 }
 
                 // Determine which parties are on which bench:
                 let rightBenchParties = this.government.concat([]);
                 let leftBenchParties = this.opposition.concat(this.crossbench);
 
-                if (rightBenchParties.length === 0 || 
-                    leftBenchParties.length === 0
-                ) {
+                if (rightBenchParties.length === 0 || leftBenchParties.length === 0) {
+                    
                     this.error.title = "Bench cannot be empty";
                     this.error.message = 
-                        ["Both benches in a legislature with the 'opposing' ",
-                        "typology must have at least one member."].join('');
+                        ["Both benches in a legislature with the 'opposing' typology must have at ",
+                        "least one member."].join('');
                     return;
                 }   
 
@@ -545,30 +539,32 @@ window.onload = function() {
                 
                 // Generate the left bench:
                 {
-                    let left = getSeatData(leftBenchParties, this.speaker);
+                    let left = this.getSeatAllocations(leftBenchParties, this.speaker);
 
                     // Calculate the number of rows and columns of seats for the 
                     // opposing benches.
                     rows = Math.ceil(Math.sqrt(left.total / RATIO));
                     cols = Math.ceil(left.total / rows);
-
                     offsetX = WIDTH / 2 - ((cols / 2) * (this.seatSize + this.seatSpacing));
                     offsetY = 40;
 
                     // Draw the left bench. Opposition MPs sit here.
-                    drawBench(rows, cols, offsetX, offsetY, left.total, left.seats, seats);
+                    seats = seats.append(
+                        drawBench(rows, cols, offsetX, offsetY, left.total, left.seats)
+                    );
                 }
 
                 // Generate the right bench:
                 {
-                    let right = getSeatData(rightBenchParties, this.speaker);
+                    let right = this.getSeatAllocations(rightBenchParties, this.speaker);
 
                     cols = Math.ceil(right.total / rows);
-
                     offsetY = offsetY + (rows + 3) * (this.seatSize + this.seatSpacing);
 
                     // Draw the right bench. Govt MPs sit here.
-                    drawBench(rows, cols, offsetX, offsetY, right.total, right.seats, seats);
+                    seats = seats.append(
+                        drawBench(rows, cols, offsetX, offsetY, right.total, right.seats)
+                    );
                 }
 
                 if (this.speaker.enabled) {
@@ -597,12 +593,11 @@ window.onload = function() {
              */
             drawSemicircle: function() {
 
-                // These are the total number of seats and the corresponding
-                // number of rows required, where rows = index + 1.
-                // These values taken from David Richfield's parliament diagram
-                // generator.  
-                let rowGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 
-                    469, 559, 657, 762, 876, 997, 1126];
+                // These are the total number of seats and the corresponding number of rows 
+                // required, where rows = index + 1.
+                // These values taken from David Richfield's parliament diagram generator.  
+                let rowGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 469, 559, 657, 762, 
+                    876, 997, 1126];
 
                 let rows;
                 for (rows = 0; rows < rowGuides.length; rows++) {
@@ -614,8 +609,13 @@ window.onload = function() {
                 // Ensure we have at least 1 row.
                 rows = Math.max(1, rows);
 
-                // The following is the derivation of the 'base' 
-                // (the radius of the inner row)
+                // The total length of circumference we will need for all the seats.
+                let total_c = this.numberOfSeats * (this.seatSize + this.seatSpacing);
+                
+                // The total radius, based on the total circumference:
+                let total_r = total_c / Math.PI;
+
+                // The following is the derivation of the 'base' (the radius of the inner row)
                 // (here, 'seatsize' = seatSize + seatSpacing)
                 
                 // Each row has a radii of (base + seatsize * rows), e.g.:
@@ -625,24 +625,14 @@ window.onload = function() {
                 // total_r = (100 * rows) + (0 * 25) + (1 * 25) + ... + ((rows-1) * 25)                 
                 //         = rows * (base + (base + rows * seatsize)) / 2 
 
-                // Since the above is a arithmetic sequence, we apply the 
-                // formula for the sum:
+                // Since the above is a arithmetic sequence, we apply the formula for the sum:
 
                 // (2 * total_r) / rows = base + (base + rows * seatSize)
                 // ...
                 // base = 0.5 * ((2 * total_r) / rows - rows * seatSize)
 
-                // The total length of circumference we will need for all the
-                // seats.
-                let total_c = this.numberOfSeats 
-                    * (this.seatSize + this.seatSpacing);
-                
-                // The total radius, based on the total circumference:
-                let total_r = total_c / Math.PI;
-
                 // Calculate the base:
-                let base = 0.5 * (((2 * total_r) / rows) 
-                    - rows * (this.seatSize + this.seatSpacing));
+                let base = 0.5 * (((2 * total_r) / rows) - rows * (this.seatSize + this.seatSpacing));
 
                 // Calculate radii of each row:
                 let rowRadii = [];
@@ -653,14 +643,12 @@ window.onload = function() {
                 // Get the total row radii:
                 let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
 
-                console.log(total_r, rowRadiiTotal);
-
                 // Distribute seats to each row:
                 let rowDist = [];
                 for (let i = 0; i < rows; i++) {
-                    rowDist.push(Math.round(
-                        (rowRadii[i] / rowRadiiTotal) * this.numberOfSeats
-                    ));
+                    rowDist.push(
+                        Math.round((rowRadii[i] / rowRadiiTotal) * this.numberOfSeats)
+                    );
                 }
  
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
@@ -720,8 +708,7 @@ window.onload = function() {
                     seats = seats.concat(createRow(rowRadii[i], center, rowDist[i]));
                 }
 
-                // Sort the seats by angle, so that we can color each seat
-                // correctly.
+                // Sort the seats by angle, so that we can color each seat correctly.
                 //@@TODO: bias sorting by row.
                 seats.sort((a, b) => b.angle - a.angle);
                 
@@ -742,11 +729,12 @@ window.onload = function() {
                     }
                     else if (this.seatShape === "square") {
                         let p1 = new Point(
-                            seat.x - this.seatSize/2, 
-                            seat.y - this.seatSize/2);
+                            seat.x - this.seatSize / 2, 
+                            seat.y - this.seatSize / 2
+                        );
                         let p2 = new Point(
-                            seat.x + this.seatSize/2, 
-                            seat.y + this.seatSize/2
+                            seat.x + this.seatSize / 2, 
+                            seat.y + this.seatSize / 2
                         );
                         shape = new Path.Rectangle(p1, p2);
                         
@@ -755,7 +743,7 @@ window.onload = function() {
                     }
                     
                     // Set the color of the seats conditionally:
-                    if (num < 0.5 * this.numberOfSeats) {
+                    if (num < 0.50 * this.numberOfSeats) {
                         shape.fillColor = "#FF00FF";
                     }
                     else {
