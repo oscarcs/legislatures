@@ -533,8 +533,9 @@ window.onload = function() {
                 // Determines the number of rows to columns (1 row : RATIO columns)
                 const RATIO = 3.75; 
 
-                // Draw a bench.
                 let that = this;
+                
+                // Draw a bench.
                 function drawBench(rows, cols, offsetX, offsetY, total, seatsByParty) {
 
                     let group = [];
@@ -581,37 +582,40 @@ window.onload = function() {
 
                 let rows, cols;
                 let offsetX, offsetY;
-                let seats = [];
+                let seatShapes = [];
                 
-                // Generate the left bench:
-                {
-                    let left = this.getSeatAllocations(leftBenchParties, this.speaker);
+                let left = that.getSeatAllocations(leftBenchParties, that.speaker);
+                let right = that.getSeatAllocations(rightBenchParties, that.speaker);                
 
-                    // Calculate the number of rows and columns of seats for the 
-                    // opposing benches.
+                // The number of rows should be based on the largest bench:
+                if (left.total > right.total) {
                     rows = Math.ceil(Math.sqrt(left.total / RATIO));
-                    cols = Math.ceil(left.total / rows);
-                    offsetX = WIDTH / 2 - ((cols / 2) * (this.seatSize + this.seatSpacing));
-                    offsetY = 40;
-
-                    // Draw the left bench. Opposition MPs sit here.
-                    seats = seats.concat(
-                        drawBench(rows, cols, offsetX, offsetY, left.total, left.seats)
-                    );
+                }
+                else {
+                    rows = Math.ceil(Math.sqrt(right.total / RATIO));
                 }
 
-                // Generate the right bench:
-                {
-                    let right = this.getSeatAllocations(rightBenchParties, this.speaker);
+                leftCols = Math.ceil(left.total / rows);                
+                rightCols = Math.ceil(right.total / rows);                
 
-                    cols = Math.ceil(right.total / rows);
-                    offsetY = offsetY + (rows + 3) * (this.seatSize + this.seatSpacing);
-
-                    // Draw the right bench. Govt MPs sit here.
-                    seats = seats.concat(
-                        drawBench(rows, cols, offsetX, offsetY, right.total, right.seats)
-                    );
+                if (leftCols > rightCols) {
+                    offsetX = WIDTH / 2 - ((leftCols / 2) * (that.seatSize + that.seatSpacing));                    
                 }
+                else {
+                    offsetX = WIDTH / 2 - ((rightCols / 2) * (that.seatSize + that.seatSpacing));                    
+                }
+                
+                // Draw the left bench. Opposition MPs sit here.
+                offsetY = 40;
+                seatShapes = seatShapes.concat(
+                    drawBench(rows, leftCols, offsetX, offsetY, left.total, left.seats)
+                );
+                
+                // Draw the right bench. Govt MPs sit here.
+                offsetY += (rows + 3) * (that.seatSize + that.seatSpacing);
+                seatShapes = seatShapes.concat(
+                    drawBench(rows, rightCols, offsetX, offsetY, right.total, right.seats)
+                );
 
                 if (this.speaker.enabled) {
                     offsetX -= 2 * (this.seatSize + this.seatSpacing);
@@ -619,7 +623,7 @@ window.onload = function() {
                     this.drawSpeaker(offsetX, offsetY);
                 }
 
-                let group = new Group(seats);
+                let group = new Group(seatShapes);
             },
 
             /**
