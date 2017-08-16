@@ -54,6 +54,7 @@ window.onload = function() {
             seatSpacing: 5,
             seatSize: 20,
             enforceConsistentSpacing: false,
+            equalBenches: false,
 
             //
             // Load and save:
@@ -195,6 +196,7 @@ window.onload = function() {
                     seatSize: this.seatSize,
                     seatSpacing: this.seatSpacing,
                     enforceConsistentSpacing: this.enforceConsistentSpacing,                    
+                    equalBenches: this.equalBenches,                    
                 };
 
                 let json = JSON.stringify(obj);
@@ -269,6 +271,7 @@ window.onload = function() {
                 this.seatSize = obj.seatSize;
                 this.seatSpacing = obj.seatSpacing;
                 this.enforceConsistentSpacing = obj.enforceConsistentSpacing;  
+                this.equalBenches = obj.equalBenches;  
             },
 
             /**
@@ -466,9 +469,12 @@ window.onload = function() {
              */
             getNextSeatAllocation: function(seatAllocations) {
                 let i = 0;
-                while (seatAllocations[i].num === 0) {
+                for (alloc of seatAllocations) {
+                    if (alloc.num !== 0) break; 
                     i++;
                 }
+
+                if (seatAllocations[i] == null) return null;
 
                 seatAllocations[i].num--;
                 return seatAllocations[i].color;
@@ -536,7 +542,7 @@ window.onload = function() {
                 let that = this;
                 
                 // Draw a bench.
-                function drawBench(rows, cols, offsetX, offsetY, total, seatsByParty) {
+                function drawBench(rows, cols, offsetX, offsetY, seatsByParty) {
 
                     let group = [];
                     let numberSeatsDrawn = 0;
@@ -545,8 +551,6 @@ window.onload = function() {
                     for (let i = 0; i < cols; i++) {
                         for (let j = 0; j < rows; j++) {                        
                             
-                            if (numberSeatsDrawn >= total) break;
-
                             let center = new Point(
                                 i * (that.seatSize + that.seatSpacing), 
                                 j * (that.seatSize + that.seatSpacing)
@@ -555,6 +559,7 @@ window.onload = function() {
                             center.y += offsetY;
 
                             currentColor = that.getNextSeatAllocation(seatsByParty);
+                            if (currentColor === null) break;
 
                             group.push(
                                 that.drawSeat(that.seatShape, currentColor, center, that.seatSize)
@@ -587,16 +592,40 @@ window.onload = function() {
                 let left = that.getSeatAllocations(leftBenchParties, that.speaker);
                 let right = that.getSeatAllocations(rightBenchParties, that.speaker);                
 
+                let equalBenchLeft, equalBenchRight;
+
                 // The number of rows should be based on the largest bench:
                 if (left.total > right.total) {
-                    rows = Math.ceil(Math.sqrt(left.total / RATIO));
+                    if (this.equalBenches) {
+                        equalBenchLeft = Math.ceil(this.numberOfSeats / 2);
+                        equalBenchRight = Math.floor(this.numberOfSeats / 2);
+
+                        rows = Math.ceil(Math.sqrt(equalBenchRight / RATIO));
+                    }
+                    else {
+                        rows = Math.ceil(Math.sqrt(left.total / RATIO));                        
+                    }
                 }
                 else {
-                    rows = Math.ceil(Math.sqrt(right.total / RATIO));
+                    if (this.equalBenches) {
+                        equalBenchLeft = Math.floor(this.numberOfSeats / 2);
+                        equalBenchRight = Math.ceil(this.numberOfSeats / 2);
+
+                        rows = Math.ceil(Math.sqrt(equalBenchRight / RATIO));
+                    }
+                    else {
+                        rows = Math.ceil(Math.sqrt(right.total / RATIO));
+                    }
                 }
 
-                leftCols = Math.ceil(left.total / rows);                
-                rightCols = Math.ceil(right.total / rows);                
+                if (this.equalBenches) {
+                    leftCols = Math.ceil(equalBenchLeft / rows);
+                    rightCols = Math.ceil(equalBenchRight / rows);
+                }
+                else {
+                    leftCols = Math.ceil(left.total / rows);                
+                    rightCols = Math.ceil(right.total / rows);                
+                }
 
                 if (leftCols > rightCols) {
                     offsetX = WIDTH / 2 - ((leftCols / 2) * (that.seatSize + that.seatSpacing));                    
@@ -606,20 +635,60 @@ window.onload = function() {
                 }
                 
                 // Draw the left bench. Opposition MPs sit here.
-                offsetY = 40;
-                seatShapes = seatShapes.concat(
-                    drawBench(rows, leftCols, offsetX, offsetY, left.total, left.seats)
-                );
-                
+                function drawLeftBench() {
+                    offsetY = 40;
+                    
+                    let total;
+                    if (that.equalBenches) {
+                        total = equalBenchLeft;
+                    }
+                    else {
+                        total = left.total; 
+                    }
+
+                    seatShapes = seatShapes.concat(
+                        drawBench(rows, leftCols, offsetX, offsetY, left.seats)
+                    );
+                }
+
                 // Draw the right bench. Govt MPs sit here.
-                offsetY += (rows + 3) * (that.seatSize + that.seatSpacing);
-                seatShapes = seatShapes.concat(
-                    drawBench(rows, rightCols, offsetX, offsetY, right.total, right.seats)
-                );
+                function drawRightBench() {
+                    offsetY = 40 + (rows + 3) * (that.seatSize + that.seatSpacing);
+
+                    let total;
+                    if (that.equalBenches) {
+                        total = equalBenchRight;
+                    }
+                    else {
+                        total = right.total; 
+                    }
+
+                    seatShapes = seatShapes.concat(
+                        drawBench(rows, rightCols, offsetX, offsetY, right.seats)
+                    );
+                }
+
+                if (left.total > right.total) {
+                    drawLeftBench();
+                    if (this.equalBenches && left.seats[left.seats.length - 1] !== 0) {
+                        right.seats = right.seats.concat(left.seats);
+                        right.seats = right.seats.filter(x => x.num !== 0);
+                        
+                    }
+                    drawRightBench();
+                }
+                else {
+                    drawRightBench();
+                    if (this.equalBenches && right.seats[right.seats.length - 1] !== 0) {
+                        left.seats = left.seats.concat(right.seats);
+                        left.seats = left.seats.filter(x => x.num !== 0);
+                    }
+                    drawLeftBench();
+                }
 
                 if (this.speaker.enabled) {
-                    offsetX -= 2 * (this.seatSize + this.seatSpacing);
-                    offsetY -= 2 * (this.seatSize + this.seatSpacing);
+                    offsetX -= 2 * (that.seatSize + that.seatSpacing);
+                    offsetY = 40 + (rows + 1) * (that.seatSize + that.seatSpacing)
                     this.drawSpeaker(offsetX, offsetY);
                 }
 

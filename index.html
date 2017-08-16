@@ -393,6 +393,18 @@
                         </div>
                         </div>
 
+                        <div class="field" v-if="typology == 'opposing'">
+                            <div class="control">
+                                <label class="checkbox label">
+                                <input class="checkbox" 
+                                    type="checkbox" 
+                                    v-model="equalBenches"
+                                >
+                                Equal Bench Sizes
+                                </label>
+                        </div>
+                        </div>
+
                     </div> <!-- box -->
 
                     <!-- Load/Save Data: -->
