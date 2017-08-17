@@ -70,23 +70,32 @@
                             <label class="label">Legislature Name: </label>
                             <input 
                                 class="input" 
-                                v-model.number="legislatureName"
+                                v-model="legislatureName"
                             >
                         </div>
                         </div>
 
-                        <div class="field">                    
-                        <div class="control">
-                            <label class="label">Typology: </label>
-                            <div class="select">
-                                <select v-model="typology">
-                                    <option 
-                                        v-for="option in typologies" 
-                                        v-bind:value="option.value"
-                                    >{{ option.text }}</option>
-                                </select>
+                        <div class="field is-grouped">                    
+                            <div class="control">
+                                <label class="label">Typology: </label>
+                                <div class="select">
+                                    <select v-model="typology">
+                                        <option 
+                                            v-for="option in typologies" 
+                                            v-bind:value="option.value"
+                                        >{{ option.text }}</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+
+                            <div class="control" v-if="typology=='circle'">
+                                <label class="label">Angle (1-360): </label>
+                                <input 
+                                    class="input" 
+                                    v-model.number="theta"
+                                    type="number"
+                                >
+                            </div>
                         </div>
 
                         <div class="field">                    
@@ -306,7 +315,10 @@
 
                         </div> <!-- right column -->
 
-                        <div class="column" v-if="parties.length > 0 && typology === 'semicircle'">
+                        <div 
+                            class="column" 
+                            v-if="parties.length > 0 && typology === 'semicircle' || typology === 'circle'"
+                        >
                             
                             <nav class="panel">
                                 <p class="panel-heading">Party Ordering</p>

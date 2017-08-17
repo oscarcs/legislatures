@@ -13,15 +13,16 @@ window.onload = function() {
 
             jurisdictionName: "",
             legislatureName: "",
-            // The arrangment of seating in the legislature, based on
-            // the typologies in XML's architecure book 'Parliament'.
+            // The arrangment of seating in the legislature, based on the typologies in XML's 
+            // architecure book 'Parliament'.
             // Possible values:
-            // "opposing": Opposing benches, e.g. United Kingdom.
-            // "semicircle": Semicircular, e.g. European Union.
-            // "horseshoe": e.g. New Zealand.
-            // "circle": e.g. Jordan, Slovenia.
-            // "classroom": Consecutive rows, e.g. China.
+            //  "opposing": Opposing benches, e.g. United Kingdom.
+            //  "semicircle": Semicircular, e.g. European Union.
+            //  "horseshoe": e.g. New Zealand.
+            //  "circle": e.g. Jordan, Slovenia.
+            //  "classroom": Consecutive rows, e.g. China.
             typology: "opposing",
+            theta: 180,
             // Number of members / seats in the legislature.
             numberOfSeats: 0,
 
@@ -47,20 +48,13 @@ window.onload = function() {
             // Display settings:
             //
 
-            // Seat shape. XML's book uses squares, while Wikipedia uses
-            // circles.
+            // Seat shape. XML's book uses squares, while Wikipedia uses circles.
             // Possible values: "circle", "square"
             seatShape: "square",
             seatSpacing: 5,
             seatSize: 20,
             enforceConsistentSpacing: false,
             equalBenches: false,
-
-            //
-            // Load and save:
-            //
-
-            dataEntry: "",
 
         /**
          * Display properties:
@@ -91,6 +85,8 @@ window.onload = function() {
                 { text: "Drawing Settings", name: "drawing" },
                 { text: "Load/Save Data", name: "load-save" },
             ],
+
+            dataEntry: "",            
         },
 
         created: function() {
@@ -184,6 +180,7 @@ window.onload = function() {
                     jurisdictionName: this.jurisdictionName,
                     legislatureName: this.legislatureName,
                     typology: this.typology,
+                    theta: this.theta,
                     numberOfSeats: this.numberOfSeats,
 
                     // Parties
@@ -223,6 +220,7 @@ window.onload = function() {
                 this.jurisdictionName = obj.jurisdictionName;
                 this.legislatureName = obj.legislatureName;
                 this.typology = obj.typology;
+                this.theta = obj.theta;
                 this.numberOfSeats = obj.numberOfSeats;
 
                 // Parties
@@ -509,7 +507,7 @@ window.onload = function() {
                         break;
 
                     case "semicircle":
-                        this.drawSemicircle();
+                        this.drawCircle(180);
                         break;
 
                     case "horseshoe":
@@ -517,7 +515,7 @@ window.onload = function() {
                         break;
 
                     case "circle":
-                        this.drawCircle();
+                        this.drawCircle(this.theta);
                         break;
 
                     default:
@@ -693,61 +691,67 @@ window.onload = function() {
             },
 
             /**
-             * Draw seats arranged in a semicircle.
+             * Draw seats arranged in a circle.
+             * 'theta' is the angle over which the seats should be arranged.
              */
-            drawSemicircle: function() {
+            drawCircle: function(theta) {
 
                 let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                 
-
+                
                 // These are the total number of seats and the corresponding number of rows 
                 // required, where rows = index + 1.
                 // These values taken from David Richfield's parliament diagram generator.  
-                let rowGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 469, 559, 657, 762, 
+                let ringGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 469, 559, 657, 762, 
                     876, 997, 1126];
 
-                let rows;
-                for (rows = 0; rows < rowGuides.length; rows++) {
-                    if (seatData.total < rowGuides[rows]) {
+                // Adjust the ring guides based on theta.
+                for (let i = 0; i < ringGuides.length; i++) {
+                    ringGuides[i] = (theta / 180) * ringGuides[i]; 
+                }
+
+                let rings;
+                for (rings = 0; rings < ringGuides.length; rings++) {
+                    if (seatData.total < ringGuides[rings]) {
                         break;
                     }
                 }
                 // Ensure we have at least 1 row.
-                rows = Math.max(1, rows);
-
+                rings = Math.max(1, rings);
 
                 // The total length of circumference we will need for all the seats.
                 let total_c = seatData.total * (this.seatSize + this.seatSpacing);
                 
                 // The total radius, based on the total circumference:
-                let total_r = total_c / Math.PI;
+                let total_r = total_c / ((theta / 180) * Math.PI);
 
                 // Calculate the base:
                 // (Derivation for this is based on an arithmetic series.)
-                let base = 0.5 * (((2 * total_r) / rows) - rows * (this.seatSize + this.seatSpacing));
+                let inner = 0.5 * (((2 * total_r) / rings) - rings * (this.seatSize + this.seatSpacing));
 
                 // Calculate radii of each row:
-                let rowRadii = [];
-                for (let i = 0; i < rows; i++) {
-                    rowRadii.push(base + i * (this.seatSize + this.seatSpacing)); 
+                let radii = [];
+                for (let i = 0; i < rings; i++) {
+                    radii.push(inner + i * (this.seatSize + this.seatSpacing)); 
                 }
 
-                // Get the total row radii:
-                let rowRadiiTotal = rowRadii.reduce((a, b) => a + b, 0);
+                // Get the total radii of all of the rings:
+                let radiiTotal = radii.reduce((a, b) => a + b, 0);
                 
-                // Distribute seats to each row:
-                let rowDist = [];
-                let rowTotal = 0;
-                for (let i = 0; i < rows; i++) {
-                    rowDist.push(
-                        Math.round((rowRadii[i] / rowRadiiTotal) * seatData.total)
+                // Distribute seats to each ring:
+                let distribution = [];
+                let distTotal = 0;
+                for (let i = 0; i < rings; i++) {
+                    distribution.push(
+                        Math.round((radii[i] / radiiTotal) * seatData.total)
                     );
-                    rowTotal += rowDist[i];
+                    distTotal += distribution[i];
                 }
- 
-                // Adjust outer row to ensure the correct number of seats are drawn.
-                rowDist[rowDist.length-1] += seatData.total - rowTotal;
-
-                let center = new Point(WIDTH / 2, HEIGHT / 2 + rowRadii[0]);
+    
+                // Adjust outer row to ensure the correct number of seats are drawn using the
+                // difference between the seatData and the distribution total.
+                distribution[distribution.length-1] += seatData.total - distTotal;
+                
+                let center = new Point(WIDTH / 2, HEIGHT / 2 + radii[0]);
                 
                 // Create a semicircular row of seats.
                 // radius: radius of row
@@ -759,25 +763,13 @@ window.onload = function() {
                     
                     let seats = [];
 
-                    let circumference = Math.PI * radius;
+                    let circumference = (180 / theta) * Math.PI * radius;
                     let angle = 0;
                     let totalAngle = 0; 
                     let startAngle = 0; 
 
-                    // This option ensures that each row has identical spacing 
-                    // between seats.
-                    // This will produce 'rough edges', which may be a desired 
-                    // effect.
-                    if (that.enforceConsistentSpacing) {
-                        angle = 180 * (that.seatSize + that.seatSpacing) / circumference;
-                        totalAngle = (totalSeats - 1) * angle;
-                        startAngle = (180 - totalAngle) / 2;
-                    }
-                    // Otherwise, Use seat spacings that are roughly similar, 
-                    // but not identical. 
-                    else {
-                        angle = 180 / (totalSeats - 1);
-                    }
+                    angle = theta / (totalSeats - 1);
+                    startAngle = (180 - theta) / 2;
 
                     for (let i = 0; i < totalSeats; i++) {
 
@@ -799,8 +791,8 @@ window.onload = function() {
 
                 // Generate the seat objects.
                 let seats = [];
-                for (let i = 0; i < rows; i++) {
-                    seats = seats.concat(createRow(rowRadii[i], center, rowDist[i]));
+                for (let i = 0; i < rings; i++) {
+                    seats = seats.concat(createRow(radii[i], center, distribution[i]));
                 }
 
                 // Sort the seats by angle, so that we can color each seat correctly.
@@ -825,25 +817,11 @@ window.onload = function() {
 
                 if (this.speaker.enabled) {
                     let x = center.x
-                    let y = center.y + this.seatSize + this.seatSpacing;
+                    let y = center.y;
                     this.drawSpeaker(x, y);
                 }
 
                 let group = new Group(seatShapes);
-            },
-
-            /**
-             * Draw seats in two opposing benches, linked by a half-circle.
-             */
-            drawHorseshoe: function() {
-
-            },
-
-            /**
-             * Draw seats arranged in a circle.
-             */
-            drawCircle: function() {
-
             },
 
             /**
