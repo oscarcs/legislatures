@@ -591,53 +591,36 @@ window.onload = function() {
                 let rows, cols;
                 let offsetX, offsetY;
                 let seatShapes = [];
+                let equalBenchLeft, equalBenchRight;
                 
                 // Get the seat allocations for each group of parties.
                 let left = that.getSeatAllocations(leftBenchParties, that.speaker);
                 let right = that.getSeatAllocations(rightBenchParties, that.speaker);                
 
-                let equalBenchLeft, equalBenchRight;
-
-                // The number of rows should be based on the largest bench:
-                if (left.total > right.total) {
-                    if (this.equalBenches) {
-                        equalBenchLeft = Math.ceil(this.numberOfSeats / 2);
-                        equalBenchRight = Math.floor(this.numberOfSeats / 2);
-
-                        rows = Math.ceil(Math.sqrt(equalBenchLeft / RATIO));
-                    }
-                    else {
-                        rows = Math.ceil(Math.sqrt(left.total / RATIO));                        
-                    }
-                }
-                else {
-                    if (this.equalBenches) {
-                        equalBenchLeft = Math.floor(this.numberOfSeats / 2);
-                        equalBenchRight = Math.ceil(this.numberOfSeats / 2);
-
-                        rows = Math.ceil(Math.sqrt(equalBenchRight / RATIO));
-                    }
-                    else {
-                        rows = Math.ceil(Math.sqrt(right.total / RATIO));
-                    }
-                }
-
                 if (this.equalBenches) {
+
+                    let largerBench = Math.ceil(this.numberOfSeats / 2);
+                    let smallerBench = Math.floor(this.numberOfSeats / 2);
+                    equalBenchLeft = left.total > right.total ? largerBench : smallerBench;
+                    equalBenchRight = left.total < right.total ? largerBench : smallerBench;
+
+                    rows = Math.ceil(Math.sqrt(largerBench / RATIO));                    
+
                     leftCols = Math.ceil(equalBenchLeft / rows);
                     rightCols = Math.ceil(equalBenchRight / rows);
+
+                    console.log(largerBench, smallerBench, equalBenchLeft, equalBenchRight, rows);
                 }
                 else {
+                    rows = Math.ceil(Math.sqrt(Math.max(left.total, right.total) / RATIO));
+
                     leftCols = Math.ceil(left.total / rows);                
                     rightCols = Math.ceil(right.total / rows);                
                 }
 
-                if (leftCols > rightCols) {
-                    offsetX = WIDTH / 2 - ((leftCols / 2) * (that.seatSize + that.seatSpacing));                    
-                }
-                else {
-                    offsetX = WIDTH / 2 - ((rightCols / 2) * (that.seatSize + that.seatSpacing));                    
-                }
-                
+                let largerCols = Math.max(leftCols, rightCols);
+                offsetX = WIDTH / 2 - ((largerCols / 2) * (that.seatSize + that.seatSpacing));                    
+
                 // Draw the left bench. Opposition MPs sit here.
                 function drawLeftBench() {
                     offsetY = 40;
@@ -658,10 +641,10 @@ window.onload = function() {
                     );
                 }
 
+                // Draw the left bench before the right bench, in case we want to 'overflow'
+                // some of the seats to the right bench. This case is far less common, because
+                // in most legislatures the right bench should be a majority.
                 if (left.total > right.total) {
-                    // Draw the left bench before the right bench, in case we want to 'overflow'
-                    // some of the seats to the right bench. This case is far less common, because
-                    // in most legislatures the right bench should be a majority.
                     drawLeftBench();
                     if (this.equalBenches && left.seats[left.seats.length - 1] !== 0) {
                         right.seats = right.seats.concat(left.seats);
@@ -669,9 +652,9 @@ window.onload = function() {
                     }
                     drawRightBench();
                 }
+                // Draw the right bench before the left bench in case we want to 'overflow'
+                // some of the seats to the left bench.
                 else {
-                    // Draw the right bench before the left bench in case we want to 'overflow'
-                    // some of the seats to the left bench.
                     drawRightBench();
                     if (this.equalBenches && right.seats[right.seats.length - 1] !== 0) {
                         left.seats = left.seats.concat(right.seats);
