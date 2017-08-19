@@ -53,7 +53,6 @@ window.onload = function() {
             seatShape: "square",
             seatSpacing: 5,
             seatSize: 20,
-            enforceConsistentSpacing: false,
             equalBenches: false,
 
         /**
@@ -192,7 +191,6 @@ window.onload = function() {
                     seatShape: this.seatShape,
                     seatSize: this.seatSize,
                     seatSpacing: this.seatSpacing,
-                    enforceConsistentSpacing: this.enforceConsistentSpacing,                    
                     equalBenches: this.equalBenches,                    
                 };
 
@@ -268,7 +266,6 @@ window.onload = function() {
                 this.seatShape = obj.seatShape;
                 this.seatSize = obj.seatSize;
                 this.seatSpacing = obj.seatSpacing;
-                this.enforceConsistentSpacing = obj.enforceConsistentSpacing;  
                 this.equalBenches = obj.equalBenches;  
             },
 
@@ -289,9 +286,14 @@ window.onload = function() {
             generate: function() {
 
                 // Make the seatTotal equal to the total of seats for each party.
-                this.numberOfSeats = 0;
-                for (party of this.parties) {
-                    this.numberOfSeats += party.numberOfMembers;
+                if (this.useParties) {
+                    this.numberOfSeats = 0;
+                    for (party of this.parties) {
+                        this.numberOfSeats += party.numberOfMembers;
+                    }
+                }
+                else {
+                    this.speaker.partisan = false;
                 }
 
                 // Clear the drawn data:
@@ -489,7 +491,7 @@ window.onload = function() {
                     }
                 }
                 else {
-                    color = "#888888";
+                    color = "#999999";
                 }
 
                 let centre = new Point(x, y);
@@ -575,28 +577,41 @@ window.onload = function() {
                     return group;
                 }
 
-                // Determine which parties are on which bench:
-                let rightBenchParties = this.government.concat([]);
-                let leftBenchParties = this.opposition.concat(this.crossbench);
+                let rightBenchParties, leftBenchParties, left, right;
 
-                if (rightBenchParties.length === 0 || leftBenchParties.length === 0) {
-                    
-                    this.error.title = "Bench cannot be empty";
-                    this.error.message = 
-                        ["Both benches in a legislature with the 'opposing' typology must have at ",
-                        "least one member."].join('');
-                    return;
-                }   
+                // Determine which parties are on which bench:
+                if (this.useParties) {
+                    rightBenchParties = this.government.concat([]);
+                    leftBenchParties = this.opposition.concat(this.crossbench);
+
+                    if (rightBenchParties.length === 0 || leftBenchParties.length === 0) {                        
+                        this.error.title = "Bench cannot be empty";
+                        this.error.message = 
+                            ["Both benches in a legislature with the 'opposing' typology must have at ",
+                            "least one member."].join('');
+                        return;
+                    }   
+
+                    // Get the seat allocations for each group of parties.
+                    left = this.getSeatAllocations(leftBenchParties, this.speaker);
+                    right = this.getSeatAllocations(rightBenchParties, this.speaker);
+                }
+                else {
+                    left = this.getSeatAllocations([{
+                        numberOfMembers: Math.floor(this.numberOfSeats / 2),
+                        color: "#999999"
+                    }], this.speaker);
+                    right = this.getSeatAllocations([{
+                        numberOfMembers: Math.ceil(this.numberOfSeats / 2),
+                        color: "#999999"
+                    }], this.speaker);
+                }
 
                 let rows, cols;
                 let offsetX, offsetY;
                 let seatShapes = [];
                 let equalBenchLeft, equalBenchRight;
                 
-                // Get the seat allocations for each group of parties.
-                let left = that.getSeatAllocations(leftBenchParties, that.speaker);
-                let right = that.getSeatAllocations(rightBenchParties, that.speaker);                
-
                 if (this.equalBenches) {
 
                     let largerBench = Math.ceil(this.numberOfSeats / 2);

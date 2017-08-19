@@ -343,7 +343,7 @@
 
                         </div> <!-- columns -->
 
-                        <div class="field">
+                        <div class="field" v-if="useParties">
                         <div class="control">
                             <button 
                                 class="button" 
@@ -390,18 +390,6 @@
                                 v-model.number="seatSpacing" 
                                 type="number"
                             >   
-                        </div>
-                        </div>
-
-                        <div class="field">
-                        <div class="control">
-                            <label class="checkbox label">
-                            <input class="checkbox" 
-                                type="checkbox" 
-                                v-model="enforceConsistentSpacing"
-                            >
-                            Enforce Consistent Seat Spacing
-                            </label>
                         </div>
                         </div>
 
