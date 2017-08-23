@@ -54,14 +54,11 @@ window.onload = function() {
             seatSpacing: 5,
             seatSize: 20,
             equalBenches: false,
+            classroomColumns: 0, 
 
         /**
          * Display properties:
          */
-
-            WIDTH: 0,
-            HEIGHT: 0,
-
             // Typology select options
             typologies: [
                { text: "Opposing", value: "opposing" }, 
@@ -191,7 +188,8 @@ window.onload = function() {
                     seatShape: this.seatShape,
                     seatSize: this.seatSize,
                     seatSpacing: this.seatSpacing,
-                    equalBenches: this.equalBenches,                    
+                    equalBenches: this.equalBenches,
+                    classroomColumns: this.classroomColumns,                                 
                 };
 
                 let json = JSON.stringify(obj);
@@ -267,6 +265,7 @@ window.onload = function() {
                 this.seatSize = obj.seatSize;
                 this.seatSpacing = obj.seatSpacing;
                 this.equalBenches = obj.equalBenches;  
+                this.classroomColumns = obj.classroomColumns;
             },
 
             /**
@@ -513,19 +512,23 @@ window.onload = function() {
                         break;
 
                     case "horseshoe":
-                        this.drawHorseshoe()
+                        this.drawHorseshoe();
                         break;
 
                     case "circle":
                         this.drawCircle(this.theta);
                         break;
 
+                    case "classroom":
+                        this.drawClassroom();
+                        break;
+
                     default:
                         this.error.title = 
                             `Typology '${this.typology}' not recognized.`;
                         this.error.message = [ 
-                            "Typology must be one of 'Opposing', 'Semicircle', 'Horseshoe', ",
-                            "'Circle', or 'Classroom'"
+                            "Typology must be one of 'opposing', 'semicircle', 'horseshoe', ",
+                            "'circle', or 'classroom'"
                         ].join('');
                         return;
                 }
@@ -820,6 +823,39 @@ window.onload = function() {
                 }
 
                 let group = new Group(seatShapes);
+            },
+
+            drawClassroom: function() {
+                if (this.classroomColumns <= 0 || this.classroomColumns === null) {
+                    this.error.title = "Must set valid number of columns for the 'Classroom' typology.";
+                    this.error.message = 
+                        ["Should have a nonzero number of rows and columns."].join('');
+                    return;
+                }
+
+                let rows = Math.floor(this.numberOfSeats / this.classroomColumns);
+                
+                console.log(this.classroomColumns, rows, this.WIDTH, this.HEIGHT);
+
+                // Calculate the offsets
+                let offsetX = WIDTH / 2 - 
+                    (this.classroomColumns * (this.seatSize + this.seatSpacing)) / 2;
+                let offsetY = HEIGHT / 2 - 
+                    (rows * (this.seatSize + this.seatSpacing)) / 2;
+
+                // Draw left-to-right and front-to-back:
+                for (let i = 0; i < this.classroomColumns; i++) {
+                    for (let j = 0; j < rows; j++) {
+
+                        let x = i * (this.seatSize + this.seatSpacing) + offsetX;
+                        let y = j * (this.seatSize + this.seatSpacing) + offsetY;
+                        let p = new Point(x, y);
+                        let color = "#DDDDAA";
+
+                        this.drawSeat(this.seatShape, color, p, this.seatSize);
+                    }
+                }
+
             },
 
             /**
