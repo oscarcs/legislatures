@@ -699,9 +699,10 @@ window.onload = function() {
 
                 let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                 
                 
-                // These are the total number of seats and the corresponding number of rows 
-                // required, where rows = index + 1.
-                // These values taken from David Richfield's parliament diagram generator.  
+                // These are the total number of seats and the corresponding number of rings/rows 
+                // required, where rings = index + 1.
+                // These values taken from David Richfield's parliament diagram generator. 
+                // They appear to be pretty arbitrary, so we could replace them with a function. 
                 let ringGuides = [3, 15, 33, 61, 95, 138, 189, 247, 313, 388, 469, 559, 657, 762, 
                     876, 997, 1126];
 
@@ -727,7 +728,8 @@ window.onload = function() {
 
                 // Calculate the base:
                 // (Derivation for this is based on an arithmetic series.)
-                let inner = 0.5 * (((2 * total_r) / rings) - rings * (this.seatSize + this.seatSpacing));
+                let inner = 
+                    0.5 * (((2 * total_r) / rings) - rings * (this.seatSize + this.seatSpacing));
 
                 // Calculate radii of each row:
                 let radii = [];
@@ -748,19 +750,19 @@ window.onload = function() {
                     distTotal += distribution[i];
                 }
     
-                // Adjust outer row to ensure the correct number of seats are drawn using the
+                // Adjust outer ring to ensure the correct number of seats are drawn using the
                 // difference between the seatData and the distribution total.
                 distribution[distribution.length-1] += seatData.total - distTotal;
                 
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + radii[0]);
                 
-                // Create a semicircular row of seats.
-                // radius: radius of row
+                // Create a semicircular ring of seats.
+                // radius: radius of ring
                 // center: Point containing center
                 // totalSeats: number of seats to draw
                 // seats: seats array
                 let that = this;
-                function createRow(radius, center, totalSeats) {
+                function createRing(radius, center, totalSeats) {
                     
                     let seats = [];
 
@@ -793,15 +795,12 @@ window.onload = function() {
                 // Generate the seat objects.
                 let seats = [];
                 for (let i = 0; i < rings; i++) {
-                    seats = seats.concat(createRow(radii[i], center, distribution[i]));
+                    seats = seats.concat(createRing(radii[i], center, distribution[i]));
                 }
 
                 // Sort the seats by angle, so that we can color each seat correctly.
-                //@@TODO: bias sorting by row?
+                //@@TODO: bias sorting by row somehow?
                 seats.sort((a, b) => a.angle - b.angle);
-                
-                console.log("number of seats", this.numberOfSeats);
-                console.log("actual number of seats", seats.length);
 
                 // Draw each seat:
                 let seatShapes = [];
@@ -825,31 +824,34 @@ window.onload = function() {
                 let group = new Group(seatShapes);
             },
 
+            /**
+             * Draw seats arranged in a block.
+             */
             drawClassroom: function() {
                 if (typeof this.classroomColumns === 'undefined' || 
                     this.classroomColumns <= 0 || this.classroomColumns === null
                 ) {
-                    this.error.title = "Must set valid number of columns for the 'Classroom' typology.";
-                    this.error.message = 
-                        ["Should have a nonzero number of rows and columns."].join('');
+                    this.error.title = 
+                        "Must set valid number of columns for the 'Classroom' typology.";
+                    this.error.message = "Should have a nonzero number of rows and columns.";
                     return;
                 }
 
                 let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                
 
-                let rows = Math.floor(this.numberOfSeats / this.classroomColumns);
-                
-                console.log(this.classroomColumns, rows);
+                // We can't automatically determine an arrangement (the number of seats might be
+                // prime), so we just put the rest of the seats in a overflow row.
+                let rows = Math.ceil(this.numberOfSeats / this.classroomColumns);
 
-                // Calculate the offsets
+                // Calculate the offsets to centre the diagram.
                 let offsetX = WIDTH / 2 - 
                     (this.classroomColumns * (this.seatSize + this.seatSpacing)) / 2;
                 let offsetY = HEIGHT / 2 - 
                     (rows * (this.seatSize + this.seatSpacing)) / 2;
 
-                // Draw left-to-right and front-to-back:
-                for (let i = 0; i < this.classroomColumns; i++) {
-                    for (let j = 0; j < rows; j++) {
+                // Draw left-to-right and back-to-front:
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < this.classroomColumns; j++) {
 
                         let x = i * (this.seatSize + this.seatSpacing) + offsetX;
                         let y = j * (this.seatSize + this.seatSpacing) + offsetY;
@@ -860,6 +862,12 @@ window.onload = function() {
                     }
                 }
 
+                // Draw the speaker centred 'in front' of the assembly.
+                if (this.speaker.enabled) {
+                    let x = (rows / 2 - 0.5) * (this.seatSize + this.seatSpacing);
+                    let y = (this.classroomColumns + 2) * (this.seatSize + this.seatSpacing);
+                    this.drawSpeaker(x + offsetX, y + offsetY);
+                }
             },
 
             /**
