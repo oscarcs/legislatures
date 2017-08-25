@@ -317,8 +317,10 @@
 
                         <div 
                             class="column" 
-                            v-if="parties.length > 0 && typology === 'semicircle' || typology === 'circle'"
-                        >
+                            v-if="parties.length > 0 && 
+                                typology === 'semicircle' || typology === 'circle' || 
+                                typology === 'classroom'"
+                            >
                             
                             <nav class="panel">
                                 <p class="panel-heading">Party Ordering</p>

@@ -826,16 +826,20 @@ window.onload = function() {
             },
 
             drawClassroom: function() {
-                if (this.classroomColumns <= 0 || this.classroomColumns === null) {
+                if (typeof this.classroomColumns === 'undefined' || 
+                    this.classroomColumns <= 0 || this.classroomColumns === null
+                ) {
                     this.error.title = "Must set valid number of columns for the 'Classroom' typology.";
                     this.error.message = 
                         ["Should have a nonzero number of rows and columns."].join('');
                     return;
                 }
 
+                let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                
+
                 let rows = Math.floor(this.numberOfSeats / this.classroomColumns);
                 
-                console.log(this.classroomColumns, rows, this.WIDTH, this.HEIGHT);
+                console.log(this.classroomColumns, rows);
 
                 // Calculate the offsets
                 let offsetX = WIDTH / 2 - 
@@ -850,7 +854,7 @@ window.onload = function() {
                         let x = i * (this.seatSize + this.seatSpacing) + offsetX;
                         let y = j * (this.seatSize + this.seatSpacing) + offsetY;
                         let p = new Point(x, y);
-                        let color = "#DDDDAA";
+                        let color = this.getNextSeatAllocation(seatData.seats);                        
 
                         this.drawSeat(this.seatShape, color, p, this.seatSize);
                     }
