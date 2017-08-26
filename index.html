@@ -177,19 +177,18 @@
                         </div>
                         </div>
 
+                        <div v-if="numberOfSeats > 0" class="field">
+                        <div class="control">
+                            Remaining seats: {{ numberOfSeats - 
+                                parties.reduce((acc, cur) => acc += cur.numberOfMembers, 0) }}
+                        </div>
+                        </div>
 
                         <div v-if="useParties" class="columns">
 
                         <div v-if="parties.length > 0" class="column is-8">
                         
-                            <div v-if="numberOfSeats > 0" class="field">
-                            <div class="control">
-                                Remaining seats: {{ numberOfSeats - 
-                                    parties.reduce((acc, cur) => acc += cur.numberOfMembers, 0) }}
-                            </div>
-                            </div>
 
-                            <draggable v-model="parties">
                                 <div class="card" v-for="party in parties">
                                     
                                     <header class="card-header">
@@ -262,7 +261,6 @@
                                     </div>
                                     </div>
                                 </div>
-                            </draggable>
                         </div> <!-- left column -->
 
                         <div class="column" v-if="parties.length > 0 && typology === 'opposing'">
@@ -317,14 +315,17 @@
 
                         <div 
                             class="column" 
-                            v-if="parties.length > 0 && 
-                                typology === 'semicircle' || typology === 'circle' || 
-                                typology === 'classroom'"
-                            >
+                            v-if="parties.length > 0 && typology !== 'opposing'">
                             
                             <nav class="panel">
                                 <p class="panel-heading">Party Ordering</p>
-                                <div class="panel-block"><i>(Left)</i></div>
+                            
+                                <template v-if="typology === 'horseshoe'">
+                                    <div class="panel-block"><i>(Left / Opposition)</i></div>
+                                </template>
+                                <template v-else>
+                                    <div class="panel-block"><i>(Left)</i></div>
+                                </template>
 
                                 <draggable 
                                     v-model="partyOrdering" 
@@ -337,9 +338,14 @@
                                 </div>
                                 </draggable>
 
-                                <div class="panel-block"><i>(Right)</i></div>
+                                <template v-if="typology === 'horseshoe'">
+                                    <div class="panel-block"><i>(Right / Government)</i></div>
+                                </template>
+                                <template v-else>
+                                    <div class="panel-block"><i>(Right)</i></div>
+                                </template>
+                            
                             </nav>
-
 
                         </div> <!-- right column -->
 

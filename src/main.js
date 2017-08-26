@@ -511,12 +511,12 @@ window.onload = function() {
                         this.drawCircle(180);
                         break;
 
-                    case "horseshoe":
-                        this.drawHorseshoe();
-                        break;
-
                     case "circle":
                         this.drawCircle(this.theta);
+                        break;
+
+                    case "horseshoe":
+                        this.drawHorseshoe();
                         break;
 
                     case "classroom":
@@ -687,18 +687,29 @@ window.onload = function() {
                     offsetY = 40 + (rows + 1) * (that.seatSize + that.seatSpacing)
                     this.drawSpeaker(offsetX, offsetY);
                 }
-
-                let group = new Group(seatShapes);
             },
 
             /**
              * Draw seats arranged in a circle.
-             * 'theta' is the angle over which the seats should be arranged.
+             * theta: the angle over which the seats should be arranged.
+             * seatData: the coloring data and total seats.
+             * seatsOnly: return the seat data only (don't draw the seats).
+             * overrideOffset: optionally override the position of the diagram.
              */
-            drawCircle: function(theta) {
+            drawCircle: function(theta, seatData, seatsOnly, overrideOffset) {
 
-                let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                 
-                
+                if (typeof seatData === 'undefined') {
+                    if (this.useParties) {
+                        seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);
+                    }
+                    else {
+                        seatData = this.getSeatAllocations([{
+                            numberOfMembers: this.numberOfSeats,
+                            color: "#999999"
+                        }], this.speaker);
+                    }
+                }
+
                 // These are the total number of seats and the corresponding number of rings/rows 
                 // required, where rings = index + 1.
                 // These values taken from David Richfield's parliament diagram generator. 
@@ -752,7 +763,7 @@ window.onload = function() {
     
                 // Adjust outer ring to ensure the correct number of seats are drawn using the
                 // difference between the seatData and the distribution total.
-                distribution[distribution.length-1] += seatData.total - distTotal;
+                distribution[distribution.length - 1] += seatData.total - distTotal;
                 
                 let center = new Point(WIDTH / 2, HEIGHT / 2 + radii[0]);
                 
@@ -792,37 +803,189 @@ window.onload = function() {
                     return seats;
                 }
 
+                // Optionally override the center point.
+                let pt = (typeof overrideOffset === 'undefined') ? center : overrideOffset;
+                
                 // Generate the seat objects.
                 let seats = [];
                 for (let i = 0; i < rings; i++) {
-                    seats = seats.concat(createRing(radii[i], center, distribution[i]));
+                    seats = seats.concat(createRing(radii[i], pt, distribution[i]));
                 }
 
                 // Sort the seats by angle, so that we can color each seat correctly.
                 //@@TODO: bias sorting by row somehow?
                 seats.sort((a, b) => a.angle - b.angle);
 
+                // If 'seatsOnly' is set, return the locations of seats instead of drawing them.
+                if (typeof seatsOnly !== 'undefined' && seatsOnly === true) {    
+                    return {
+                        seats: seats,
+                        rings: rings,
+                        inner: inner
+                    };
+                }
+                // Otherwise, draw each seat:
+                else {
+                    let seatShapes = [];
+                    for (let seat of seats) {
+
+                        let position = new Point(seat.x, seat.y);
+                        let color = this.getNextSeatAllocation(seatData.seats);
+
+                        shape = this.drawSeat(
+                            this.seatShape,
+                            color,
+                            position,
+                            this.seatSize
+                        );
+                        shape.rotate(seat.angle, position);
+                        seatShapes.push(shape);
+                    }
+
+                    if (this.speaker.enabled) {
+                        let x = center.x
+                        let y = center.y;
+                        this.drawSpeaker(x, y);
+                    }
+                }
+            },
+
+            /**
+             * Draw a horseshoe-type diagram. Combines 'opposing' and 'semicircle'.
+             * ratio: ratio of the seats to be taken by the semicircular part.
+             */
+            drawHorseshoe: function(ratio) {
+                if (typeof ratio === 'undefined') {
+                    ratio = 0.4;
+                }
+
+                let that = this;
+                let seats = [];
+
+                // Divide the seat data:
+                let seatData;
+
+                let rings = 0; // Number of 'rows'
+                let inner = 0; // Radius of inner 'ring' of half-circle.
+                let center = new Point(WIDTH / 2, HEIGHT / 2 - 100);
+
+                // The crossbench (semicircular) is opposite the speaker.
+                function createCrossbench() {
+
+                    // Calculate the number of seats in the half circle, such that the arrangement
+                    // of the two benches is the same.
+                    let total = 2 * Math.floor((1 - ratio) * that.numberOfSeats / 2);
+                    total = that.numberOfSeats - total;
+
+                    // Dummy up some seat data
+                    seatData = that.getSeatAllocations([{
+                        numberOfMembers: total,
+                        color: "#999999"
+                    }], that.speaker);
+
+                    // Draw the half-circle:
+                    let circle = that.drawCircle(180, seatData, true, center);
+                    rings = circle.rings;
+                    inner = circle.inner;
+                    return circle.seats;
+                }
+
+                function createBench(sortOrder, offsetX, offsetY, total) {
+                    let bench = [];
+
+                    // Dummy up some seat data
+                    seatData = that.getSeatAllocations([{
+                        numberOfMembers: Math.floor((1 - ratio) * that.numberOfSeats / 2),
+                        color: "#999999"
+                    }], that.speaker);
+
+                    // Calculate the requisite number of rows:
+                    let rows = Math.ceil(seatData.total / rings);
+
+                    // The number of rings serves as the number of columns for each bench.
+                    for (let i = 0; i < rings; i++) {
+                        for (let j = 0; j < rows; j++) {
+
+                            let x = i * (that.seatSize + that.seatSpacing);
+                            let y = j * (that.seatSize + that.seatSpacing);
+
+                            bench.push({
+                                x: x + offsetX,
+                                y: y + offsetY,
+                                angle: 0
+                            });
+                        }
+                    }
+
+                    // Left
+                    if (sortOrder === 'asc') {
+                        // Sort for array trimming
+                        bench.sort((a, b) => a.y === b.y ? (a.x - b.x) : (b.y - a.y));
+                        bench = bench.slice(bench.length - seatData.total);
+                        
+                        // Sort for seat allocation
+                        bench.sort((a, b) => a.y === b.y ? (a.x - b.x) : (b.y - a.y));
+                    }
+                    // Right
+                    else if (sortOrder === 'desc') {
+                        // Sort for array trimming
+                        bench.sort((a, b) => a.y === b.y ? (b.x - a.x) : (b.y - a.y));
+                        bench = bench.slice(bench.length - seatData.total);
+
+                        // Sort for seat allocation
+                        bench.sort((a, b) => a.y === b.y ? (b.x - a.x) : (a.y - b.y));
+                    }
+
+                    return bench;
+                }
+
+                let offsetX, offsetY;
+                // crossbenches
+                let crossbench = createCrossbench();
+                
+                // left / govt bench
+                offsetX = center.x - inner - (rings - 1) * (this.seatSize + this.seatSpacing);
+                offsetY = center.y + this.seatSize + this.seatSpacing;
+                let left = createBench('asc', offsetX, offsetY);
+
+                // right / opposition bench
+                offsetX = center.x + inner;
+                offsetY = center.y + this.seatSize + this.seatSpacing;
+                let right = createBench('desc', offsetX, offsetY);
+
+                // Add the seats in the correct order
+                seats = seats.concat(left);
+                seats = seats.concat(crossbench);
+                seats = seats.concat(right);
+                console.log(seats.length);
+
+                if (this.useParties) {
+                    seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);
+                }
+                else {
+                    seatData = this.getSeatAllocations([{
+                        numberOfMembers: this.numberOfSeats,
+                        color: "#999999"
+                    }], this.speaker);
+                }
+
                 // Draw each seat:
                 let seatShapes = [];
                 for (let seat of seats) {
-                    let shape;
-                    let position = new Point(seat.x, seat.y)
 
+                    let position = new Point(seat.x, seat.y);
                     let color = this.getNextSeatAllocation(seatData.seats);
 
-                    shape = this.drawSeat(this.seatShape, color, position, this.seatSize);
+                    shape = this.drawSeat(
+                        this.seatShape,
+                        color,
+                        position,
+                        this.seatSize
+                    );
                     shape.rotate(seat.angle, position);
                     seatShapes.push(shape);
                 }
-
-                if (this.speaker.enabled) {
-                    let x = center.x
-                    let y = center.y;
-                    this.drawSpeaker(x, y);
-                }
-
-                let group = new Group(seatShapes);
-            },
+             },
 
             /**
              * Draw seats arranged in a block.
@@ -837,7 +1000,16 @@ window.onload = function() {
                     return;
                 }
 
-                let seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);                
+                let seatData;                
+                if (this.useParties) {
+                    seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);
+                }
+                else {
+                    seatData = this.getSeatAllocations([{
+                        numberOfMembers: this.numberOfSeats,
+                        color: "#999999"
+                    }], this.speaker);
+                }  
 
                 // We can't automatically determine an arrangement (the number of seats might be
                 // prime), so we just put the rest of the seats in a overflow row.
@@ -849,23 +1021,38 @@ window.onload = function() {
                 let offsetY = HEIGHT / 2 - 
                     (rows * (this.seatSize + this.seatSpacing)) / 2;
 
-                // Draw left-to-right and back-to-front:
-                for (let i = 0; i < rows; i++) {
-                    for (let j = 0; j < this.classroomColumns; j++) {
+                
+                // Used for determining the overflow row.
+                let diff = (rows * this.classroomColumns - seatData.total) / 2; 
+                
+                // Draw back-to-front and left-to-right 
+                for (let i = 0; i < this.classroomColumns; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        
+                        // Make the top row into an 'overflow' row.
+                        if (j === 0 && (i < diff || i >= this.classroomColumns - diff)) {
+                            continue;
+                        } 
 
                         let x = i * (this.seatSize + this.seatSpacing) + offsetX;
                         let y = j * (this.seatSize + this.seatSpacing) + offsetY;
-                        let p = new Point(x, y);
-                        let color = this.getNextSeatAllocation(seatData.seats);                        
 
+                        // Centre-align the overflow, if there is one:
+                        if (j === 0 && diff % 1 === 0.5) {
+                            x -= (this.seatSize + this.seatSpacing) / 2;
+                        }
+                        
+                        // Draw the seat directly.
+                        let p = new Point(x, y);
+                        let color = this.getNextSeatAllocation(seatData.seats);
                         this.drawSeat(this.seatShape, color, p, this.seatSize);
                     }
                 }
 
                 // Draw the speaker centred 'in front' of the assembly.
                 if (this.speaker.enabled) {
-                    let x = (rows / 2 - 0.5) * (this.seatSize + this.seatSpacing);
-                    let y = (this.classroomColumns + 2) * (this.seatSize + this.seatSpacing);
+                    let x = (this.classroomColumns / 2 - 0.5) * (this.seatSize + this.seatSpacing);
+                    let y = (rows + 2) * (this.seatSize + this.seatSpacing);
                     this.drawSpeaker(x + offsetX, y + offsetY);
                 }
             },
