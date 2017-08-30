@@ -53,8 +53,12 @@ window.onload = function() {
             seatShape: "square",
             seatSpacing: 5,
             seatSize: 20,
+            // Whether or not to use equal-sized benches in the 'opposing' typology.
             equalBenches: false,
+            // Number of columns to use in 'classroom' typology.
             classroomColumns: 0, 
+            // Ratio of benches to crossbenches in 'horseshoe' typology.
+            horseshoeRatio: 0.4,
 
         /**
          * Display properties:
@@ -190,6 +194,7 @@ window.onload = function() {
                     seatSpacing: this.seatSpacing,
                     equalBenches: this.equalBenches,
                     classroomColumns: this.classroomColumns,                                 
+                    horseshoeRatio: this.horseshoeRatio,                                 
                 };
 
                 let json = JSON.stringify(obj);
@@ -266,6 +271,7 @@ window.onload = function() {
                 this.seatSpacing = obj.seatSpacing;
                 this.equalBenches = obj.equalBenches;  
                 this.classroomColumns = obj.classroomColumns;
+                this.horseshoeRatio = obj.horseshoeRatio;
             },
 
             /**
@@ -293,6 +299,13 @@ window.onload = function() {
                 }
                 else {
                     this.speaker.partisan = false;
+                }
+
+                if (this.horseshoeRatio < 0) {
+                    this.horseshoeRatio = 0;
+                }
+                else if (this.horseshoeRatio > 1) {
+                    this.horseshoeRatio = 1;
                 }
 
                 // Clear the drawn data:
@@ -516,7 +529,7 @@ window.onload = function() {
                         break;
 
                     case "horseshoe":
-                        this.drawHorseshoe();
+                        this.drawHorseshoe(this.horseshoeRatio);
                         break;
 
                     case "classroom":
@@ -865,7 +878,8 @@ window.onload = function() {
                 // Divide the seat data:
                 let seatData;
 
-                let rings = 0; // Number of 'rows'
+                let rings = 0; // Number of 'rows', inside to outside.
+                let rows = 0; // Number of actual rows from top to bottom.
                 let inner = 0; // Radius of inner 'ring' of half-circle.
                 let center = new Point(WIDTH / 2, HEIGHT / 2 - 100);
 
@@ -876,6 +890,10 @@ window.onload = function() {
                     // of the two benches is the same.
                     let total = 2 * Math.floor((1 - ratio) * that.numberOfSeats / 2);
                     total = that.numberOfSeats - total;
+                    //@@TODO: Make this cleaner
+                    if (that.speaker.enabled && that.speaker.partisan) {
+                        total--;
+                    }
 
                     // Dummy up some seat data
                     seatData = that.getSeatAllocations([{
@@ -900,7 +918,7 @@ window.onload = function() {
                     }], that.speaker);
 
                     // Calculate the requisite number of rows:
-                    let rows = Math.ceil(seatData.total / rings);
+                    rows = Math.ceil(seatData.total / rings);
 
                     // The number of rings serves as the number of columns for each bench.
                     for (let i = 0; i < rings; i++) {
@@ -957,7 +975,6 @@ window.onload = function() {
                 seats = seats.concat(left);
                 seats = seats.concat(crossbench);
                 seats = seats.concat(right);
-                console.log(seats.length);
 
                 if (this.useParties) {
                     seatData = this.getSeatAllocations(this.partyOrdering, this.speaker);
@@ -984,6 +1001,13 @@ window.onload = function() {
                     );
                     shape.rotate(seat.angle, position);
                     seatShapes.push(shape);
+                }
+
+                // Draw the speaker centred 'in front' of the assembly.
+                if (this.speaker.enabled) {
+                    let x = center.x;
+                    let y = center.y + rows * (this.seatSize + this.seatSpacing);
+                    this.drawSpeaker(x, y);
                 }
              },
 
