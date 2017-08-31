@@ -14,7 +14,7 @@
     <body>
         <div class="section">
             
-            <canvas class="display" id="display" width="640" height="480"></canvas>
+            <canvas resize="true" class="display" id="display" width="640" height="480"></canvas>
         
         <div class="container">
             <div class="columns" id="vue">
@@ -457,7 +457,11 @@
 
 
                     <span class="is-pulled-right">
-                        <a class="button" disabled>Export as SVG</a>
+                        <a 
+                            class="button" 
+                            v-bind:href="exportSVG()" 
+                            download="legislature.svg"
+                        >Export as SVG</a>
                         <a v-on:click="generate()" class="button is-success">Generate</a>
                     </span>
                 </div>

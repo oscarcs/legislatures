@@ -319,6 +319,12 @@ window.onload = function() {
                 console.log('Generating...');
             },
 
+            exportSVG: function() {
+                return 'data:application/octet-stream,' + encodeURIComponent(
+                    paper.project.exportSVG({asString:true}
+                ));
+            },
+
             /**
              * Add a political party.
              */
