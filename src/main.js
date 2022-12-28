@@ -111,18 +111,21 @@ window.onload = function() {
              * Set up the app.
              */
             initialize: function() {
-                WIDTH = document.getElementById('display').width;
-                HEIGHT = document.getElementById('display').height;
+                WIDTH = parseInt(window.getComputedStyle(document.getElementById('display')).width);
+                HEIGHT = parseInt(window.getComputedStyle(document.getElementById('display')).height);
                 
                 // Load from localStorage.
                 let local = localStorage.getItem("data"); 
-                if (local !== null) {
-                    this.load(local);
-                    this.dataEntry = local;
-
-                    // Generate using the previous settings.
-                    this.generate();
+                
+                if (local === null) {
+                    local = "{\"jurisdictionName\":\"New Zealand\",\"legislatureName\":\"Parliament\",\"typology\":\"horseshoe\",\"theta\":180,\"numberOfSeats\":120,\"useParties\":true,\"parties\":[{\"name\":\"National\",\"numberOfMembers\":34,\"color\":\"#00529F\",\"group\":\"government\",\"ordering\":0},{\"name\":\"Labour\",\"numberOfMembers\":64,\"color\":\"#D82A20\",\"group\":\"opposition\",\"ordering\":4},{\"name\":\"Green\",\"numberOfMembers\":10,\"color\":\"#098137\",\"group\":\"government\",\"ordering\":3},{\"name\":\"ACT\",\"numberOfMembers\":10,\"color\":\"#FDE401\",\"group\":\"government\",\"ordering\":1},{\"name\":\"Te Pāti Māori\",\"numberOfMembers\":2,\"color\":\"#54000f\",\"group\":\"government\",\"ordering\":2}],\"speaker\":{\"enabled\":false,\"partisan\":true,\"party\":{\"name\":\"National\",\"numberOfMembers\":34,\"color\":\"#00529F\",\"collapsed\":false}},\"seatShape\":\"circle\",\"seatSize\":20,\"seatSpacing\":5,\"equalBenches\":false,\"classroomColumns\":0,\"horseshoeRatio\":0.52}";
                 }
+
+                this.load(local);
+                this.dataEntry = local;
+
+                // Generate using the previous settings.
+                this.generate();
             },
 
             /**
@@ -887,7 +890,7 @@ window.onload = function() {
                 let rings = 0; // Number of 'rows', inside to outside.
                 let rows = 0; // Number of actual rows from top to bottom.
                 let inner = 0; // Radius of inner 'ring' of half-circle.
-                let center = new Point(WIDTH / 2, HEIGHT / 2 - 100);
+                let center = new Point(WIDTH / 2, HEIGHT / 2 - 60);
 
                 // The crossbench (semicircular) is opposite the speaker.
                 function createCrossbench() {

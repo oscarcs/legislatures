@@ -2,20 +2,18 @@
 <html>
     <head>
         <title>Legislatures</title>
-        <link rel="stylesheet" type="text/css" href="bin/bulma.css">
+        <link rel="stylesheet" type="text/css" href="bin/bulma.min.css">
         <link rel="stylesheet" type="text/css" href="styles.css">
         <script src="bin/vue.js"></script>
         <script src="bin/sortable.js"></script>
         <script src="bin/vue-draggable.js"></script>
-        <script src="bin/paper.js"></script>
+        <script src="bin/paper-core.min.js"></script>
         <script src="src/main.js"></script>
     </head>
 
     <body>
-        <div class="section">
-            
-            <canvas resize="true" class="display" id="display" width="640" height="480"></canvas>
-        
+        <canvas resize="true" class="display" id="display" width="640" height="480"></canvas>
+        <div class="section">        
         <div class="container">
             <div class="columns" id="vue">
                 
@@ -189,7 +187,7 @@
                         <div v-if="parties.length > 0" class="column is-8">
                         
 
-                                <div class="card" v-for="party in parties">
+                                <div class="card party-card" v-for="party in parties">
                                     
                                     <header class="card-header">
                                         <p class="card-header-title">

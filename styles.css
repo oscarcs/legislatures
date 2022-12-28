@@ -1,11 +1,15 @@
 
 .display {
     display: block;
-    height: 480px;
+    height: 500px;
     width: calc(100% - 40px);
-    margin: 20px auto 20px auto;
+    margin: 5px auto 5px auto;
 }
 
 .panel-drag {
     padding-bottom: 5px;
+}
+
+.party-card {
+    margin-bottom: 10px;
 }
